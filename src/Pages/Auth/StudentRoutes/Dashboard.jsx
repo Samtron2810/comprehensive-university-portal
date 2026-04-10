@@ -5,66 +5,23 @@ import {
   FaBookOpen,
   FaArrowRight,
   FaCalendarAlt,
-  FaClock,
   FaSpinner,
 } from "react-icons/fa";
 import api from "../../../api/axiosInstance";
 
 export default function Dashboard() {
   const [courses, setCourses] = useState([]);
+  const [cgpa, setCgpa] = useState("0.00");
+  const [activeSemester, setActiveSemester] = useState("N/A");
   const [loading, setLoading] = useState(true);
 
-  // 1. Get Student Info from localStorage (Saved by PortalLayout)
+  // ── Get Student Info from localStorage (saved by UserPortal) ──────────────
   const firstName = localStorage.getItem("firstName") || "Student";
   const lastName = localStorage.getItem("lastName") || "";
   const level = localStorage.getItem("level") || "N/A";
-  const role = localStorage.getItem("role") || "N/A";
-  const userId = localStorage.getItem("userId");
-
-  const STUDENT = {
-    name: `${firstName} ${lastName}`,
-    level: `${level} Level`,
-    role: role,
-    Id: userId,
-    department: "N/A", // This can be made dynamic if added to backend profile
-    semester: "N/A",
-    session: "2024/2025",
-    avatar: null,
-  };
-
-  // 2. Fetch Real Registration Stats
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get(`/registrations/student/${studentId}`);
-        const registrations = response.data.data;
-
-        // Find the submitted registration for the current semester
-        const activeReg =
-          registrations.find((reg) => reg.isSubmitted) || registrations[0];
-
-        if (activeReg && activeReg.courses) {
-          setCourses(activeReg.courses);
-        }
-      } catch (err) {
-        console.error("Dashboard fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (studentId) fetchDashboardData();
-  }, [studentId]);
-
-  const totalUnits = courses.reduce((sum, c) => sum + (c.units || 0), 0);
-
-  const STATS = [
-    { label: "Registered Courses", value: courses.length },
-    { label: "Credit Units", value: totalUnits },
-    { label: "Current GPA", value: "0.00" }, // Link this to Results API later
-    { label: "Semester", value: "1st" },
-  ];
+  const department = localStorage.getItem("department") || "N/A";
+  const faculty = localStorage.getItem("faculty") || "N/A";
+  const session = "2024/2025";
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -72,6 +29,65 @@ export default function Dashboard() {
     month: "long",
     day: "numeric",
   });
+
+  // ── Fetch Dashboard Data ──────────────────────────────────────────────────
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+
+        // Run all requests in parallel
+        const [regRes, cgpaRes, semRes] = await Promise.allSettled([
+          api.get("/registrations/my-registrations"),
+          api.get("/cgpa/my-cgpa"),
+          api.get("/semesters/active"),
+        ]);
+
+        // 1. Registered courses — get the most recent approved registration
+        if (regRes.status === "fulfilled") {
+          const registrations = regRes.value.data.data;
+          if (registrations && registrations.length > 0) {
+            const latest = registrations[0];
+            const coursesRaw = latest.courses || [];
+            const mapped = coursesRaw.map((item) => ({
+              _id: item.course?._id,
+              title: item.course?.title || "N/A",
+              code: item.course?.code || "N/A",
+              units: item.creditUnits || item.course?.creditUnits || 0,
+            }));
+            setCourses(mapped);
+          }
+        }
+
+        // 2. CGPA
+        if (cgpaRes.status === "fulfilled") {
+          const cgpaData = cgpaRes.value.data.data;
+          setCgpa(cgpaData?.cgpa?.toFixed(2) || "0.00");
+        }
+
+        // 3. Active semester
+        if (semRes.status === "fulfilled") {
+          const semData = semRes.value.data.data;
+          setActiveSemester(semData?.name || "N/A");
+        }
+      } catch (err) {
+        console.error("Dashboard fetch error:", err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const totalUnits = courses.reduce((sum, c) => sum + (c.units || 0), 0);
+
+  const STATS = [
+    { label: "Registered Courses", value: courses.length },
+    { label: "Credit Units", value: totalUnits },
+    { label: "CGPA", value: cgpa },
+    { label: "Semester", value: activeSemester },
+  ];
 
   if (loading) {
     return (
@@ -83,46 +99,35 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Welcome Banner */}
+      {/* ── Welcome Banner ── */}
       <div className="bg-blue-900 rounded-2xl px-8 py-7 flex items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          {STUDENT.avatar ? (
-            <img
-              src={STUDENT.avatar}
-              alt={STUDENT.name}
-              className="w-16 h-16 rounded-full object-cover border-4 border-white shrink-0"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shrink-0 border-4 border-blue-700">
-              <FaUserCircle className="text-blue-900 text-4xl" />
-            </div>
-          )}
-
+          <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shrink-0 border-4 border-blue-700">
+            <FaUserCircle className="text-blue-900 text-4xl" />
+          </div>
           <div>
             <p className="text-blue-300 text-xs font-semibold uppercase tracking-widest mb-1">
               {today}
             </p>
             <h1 className="text-white text-2xl font-black leading-snug">
-              Welcome back, {firstName}!
+              Welcome back, {firstName}! 👋
             </h1>
             <p className="text-blue-200 text-sm mt-1">
-              {STUDENT.department} &mdash; {STUDENT.Id} &mdash; {STUDENT.level}{" "}
-              &mdash; {STUDENT.session}
+              {department} &mdash; {faculty} &mdash; {level} Level &mdash;{" "}
+              {session}
             </p>
           </div>
         </div>
 
         <div className="hidden md:flex flex-col items-end gap-1 shrink-0">
           <span className="bg-yellow-400 text-blue-900 text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
-            {STUDENT.semester}
+            {activeSemester} Semester
           </span>
-          <span className="text-blue-300 text-xs">
-            {STUDENT.session} Session
-          </span>
+          <span className="text-blue-300 text-xs">{session} Session</span>
         </div>
       </div>
 
-      {/* Stats Row */}
+      {/* ── Stats Row ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {STATS.map(({ label, value }) => (
           <div
@@ -137,7 +142,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Enrolled Courses */}
+      {/* ── Enrolled Courses ── */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div className="flex items-center gap-2">
@@ -147,7 +152,7 @@ export default function Dashboard() {
             </p>
           </div>
           <Link
-            to="/student-portal/courses"
+            to="/user-portal/student-courses"
             className="flex items-center gap-1 text-xs font-bold text-blue-900 hover:underline"
           >
             See all <FaArrowRight className="text-xs" />
@@ -174,21 +179,26 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
-
-                <div className="hidden sm:flex flex-col items-end gap-1 shrink-0 text-right">
-                  <span className="flex items-center gap-1 text-xs uppercase font-bold text-blue-900">
+                <div className="hidden sm:flex flex-col items-end gap-1 shrink-0">
+                  <span className="text-xs font-bold text-blue-900 uppercase">
                     Active
                   </span>
                   <span className="flex items-center gap-1 text-xs text-gray-500">
                     <FaCalendarAlt className="text-gray-300 text-xs" />
-                    {STUDENT.session}
+                    {session}
                   </span>
                 </div>
               </div>
             ))
           ) : (
             <div className="px-6 py-10 text-center text-gray-500 text-sm">
-              No courses registered yet.
+              No courses registered yet.{" "}
+              <Link
+                to="/user-portal/student-registration"
+                className="text-blue-900 font-bold hover:underline"
+              >
+                Register now
+              </Link>
             </div>
           )}
         </div>

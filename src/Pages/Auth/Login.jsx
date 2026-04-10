@@ -31,11 +31,11 @@ export default function LoginPage() {
 
       // 3. Redirect based on role
       if (role == "STUDENT") {
-        navigate("/student-portal/dashboard", { replace: true });
+        navigate("/user-portal/student-dashboard", { replace: true });
       } else if (role == "ADMIN") {
-        navigate("/admin/dashboard", { replace: true });
+        navigate("/user-portal/admin-dashboard", { replace: true });
       } else if (role == "LECTURER") {
-        navigate("/lecturer/dashboard", { replace: true });
+        navigate("/user-portal/lecturer-dashboard", { replace: true });
       } else {
         setError("Unknown role. Please contact support.");
       }

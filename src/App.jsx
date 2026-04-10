@@ -14,18 +14,20 @@ import Admission from "./Pages/MainPages/Admission";
 import Support from "./Pages/MainPages/Support";
 import Login from "./Pages/Auth/Login";
 import Register from "./Pages/Auth/Register";
-import StudentPortal from "./Pages/Auth/StudentPortal";
-import AdminPortal from "./Pages/Auth/AdminPortal";
+import UserPortal from "./Pages/Auth/UserPortal";
 
 // Student Child Routes
-import Dashboard from "./Pages/Auth/StudentRoutes/Dashboard";
-import Payment from "./Pages/Auth/StudentRoutes/Payment";
-import Registration from "./Pages/Auth/StudentRoutes/Registration";
-import Courses from "./Pages/Auth/StudentRoutes/Courses";
-import Drop from "./Pages/Auth/StudentRoutes/Drop";
-import Result from "./Pages/Auth/StudentRoutes/Result";
-import Notice from "./Pages/Auth/StudentRoutes/Notice";
-import Schedule from "./Pages/Auth/StudentRoutes/Schedule";
+import StudentDashboard from "./Pages/Auth/StudentRoutes/Dashboard";
+import StudentPayment from "./Pages/Auth/StudentRoutes/Payment";
+import StudentRegistration from "./Pages/Auth/StudentRoutes/Registration";
+import StudentCourses from "./Pages/Auth/StudentRoutes/Courses";
+import StudentDrop from "./Pages/Auth/StudentRoutes/Drop";
+import StudentResult from "./Pages/Auth/StudentRoutes/Result";
+import StudentNotice from "./Pages/Auth/StudentRoutes/Notice";
+import StudentSchedule from "./Pages/Auth/StudentRoutes/Schedule";
+
+// Admin Child Routes
+import AdminDashboard from "./Pages/Auth/AdminRoutes/Dashboard";
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
@@ -36,7 +38,7 @@ const Layout = () => {
     location.pathname === "/login" || location.pathname === "/register";
 
   const isPortalPage =
-    location.pathname.startsWith("/student-portal") ||
+    location.pathname.startsWith("/user-portal") ||
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/lecturer");
 
@@ -63,27 +65,24 @@ const Layout = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* ── Student Portal Routes ── */}
-        <Route path="/student-portal" element={<StudentPortal />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="payment" element={<Payment />} />
-          <Route path="registration" element={<Registration />} />
-          <Route path="courses" element={<Courses />} />
-          <Route path="drop" element={<Drop />} />
-          <Route path="result" element={<Result />} />
-          <Route path="notice" element={<Notice />} />
-          <Route path="schedule" element={<Schedule />} />
-        </Route>
+        {/* ── User Portal Routes ── */}
+        <Route path="/user-portal" element={<UserPortal />}>
+          {/* For students */}
+          <Route path="student-dashboard" element={<StudentDashboard />} />
+          <Route path="student-payment" element={<StudentPayment />} />
+          <Route
+            path="student-registration"
+            element={<StudentRegistration />}
+          />
+          <Route path="student-courses" element={<StudentCourses />} />
+          <Route path="student-drop" element={<StudentDrop />} />
+          <Route path="student-result" element={<StudentResult />} />
+          <Route path="student-notice" element={<StudentNotice />} />
+          <Route path="student-schedule" element={<StudentSchedule />} />
 
-        {/* ── Admin Portal Routes (placeholder — build later) ── */}
-        <Route path="/admin" element={<AdminPortal />}>
-          <Route path="dashboard" element={<Dashboard />} />
+          {/* For Admins */}
+          <Route path="admin-dashboard" element={<AdminDashboard />} />
         </Route>
-
-        {/* ── Lecturer Portal Routes (placeholder — build later) ── */}
-        {/* <Route path="/lecturer" element={<UserPortal />}> */}
-        {/* <Route path="dashboard" element={<Dashboard />} /> */}
-        {/* </Route> */}
       </Routes>
 
       {/* Footer — hide inside all portals */}

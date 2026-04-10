@@ -18,19 +18,31 @@ const NAV_ITEMS = [
   {
     icon: FaTachometerAlt,
     label: "Dashboard",
-    to: "/student-portal/dashboard",
+    to: "/user-portal/student-dashboard",
   },
-  { icon: FaCreditCard, label: "Payment Info", to: "/student-portal/payment" },
+  {
+    icon: FaCreditCard,
+    label: "Payment Info",
+    to: "/user-portal/student-payment",
+  },
   {
     icon: FaClipboardList,
     label: "Registration",
-    to: "/student-portal/registration",
+    to: "/user-portal/student-registration",
   },
-  { icon: FaBookOpen, label: "Courses", to: "/student-portal/courses" },
-  { icon: FaCalendarMinus, label: "Drop Semester", to: "/student-portal/drop" },
-  { icon: FaPollH, label: "Result", to: "/student-portal/result" },
-  { icon: FaBell, label: "Notice", to: "/student-portal/notice" },
-  { icon: FaCalendarAlt, label: "Schedule", to: "/student-portal/schedule" },
+  { icon: FaBookOpen, label: "Courses", to: "/user-portal/student-courses" },
+  {
+    icon: FaCalendarMinus,
+    label: "Drop Semester",
+    to: "/user-portal/student-drop",
+  },
+  { icon: FaPollH, label: "Result", to: "/user-portal/student-result" },
+  { icon: FaBell, label: "Notice", to: "/user-portal/student-notice" },
+  {
+    icon: FaCalendarAlt,
+    label: "Schedule",
+    to: "/user-portal/student-schedule",
+  },
 ];
 
 export default function Sidebar() {
