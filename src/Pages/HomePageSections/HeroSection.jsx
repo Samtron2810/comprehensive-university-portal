@@ -32,13 +32,13 @@ export default function Hero() {
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
-            to="/student-login"
+            to="/login"
             className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-blue-950 text-xs font-black uppercase tracking-widest px-7 py-3 rounded transition-colors duration-200"
           >
-            Returning Student Login <FaArrowRight className="text-xs" />
+            Portal Login <FaArrowRight className="text-xs" />
           </Link>
           <Link
-            to="/student-register"
+            to="/register"
             className="inline-flex items-center gap-2 border-2 border-white text-white text-xs font-bold uppercase tracking-widest px-7 py-3 rounded hover:bg-white hover:text-blue-950 transition-colors duration-200"
           >
             Fresher Registeration

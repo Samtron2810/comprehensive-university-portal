@@ -10,25 +10,20 @@ import {
 } from "react-icons/fa";
 import api from "../../../api/axiosInstance";
 
-export default function Dashboard() {
+export default function AdminDashboard() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // 1. Get Student Info from localStorage (Saved by PortalLayout)
-  const firstName = localStorage.getItem("firstName") || "Student";
+  const firstName = localStorage.getItem("firstName") || "Admin";
   const lastName = localStorage.getItem("lastName") || "";
   const level = localStorage.getItem("level") || "N/A";
   const role = localStorage.getItem("role") || "N/A";
-  const userId = localStorage.getItem("userId");
+  const studentId = localStorage.getItem("studentId");
 
   const STUDENT = {
     name: `${firstName} ${lastName}`,
-    level: `${level} Level`,
     role: role,
-    Id: userId,
-    department: "N/A", // This can be made dynamic if added to backend profile
-    semester: "N/A",
-    session: "2024/2025",
     avatar: null,
   };
 
@@ -106,8 +101,8 @@ export default function Dashboard() {
               Welcome back, {firstName}!
             </h1>
             <p className="text-blue-200 text-sm mt-1">
-              {STUDENT.department} &mdash; {STUDENT.Id} &mdash; {STUDENT.level}{" "}
-              &mdash; {STUDENT.session}
+              {STUDENT.department} &mdash; {STUDENT.level} &mdash;{" "}
+              {STUDENT.session}
             </p>
           </div>
         </div>

@@ -1,150 +1,204 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaExclamationTriangle,
   FaTimesCircle,
   FaCheckCircle,
+  FaSpinner,
+  FaTrashAlt,
 } from "react-icons/fa";
-
-//  Mock Data
-
-const COURSES = [
-  { code: "CSC 301", title: "Object Oriented Programming", units: 3 },
-  { code: "CSC 303", title: "Fundamentals of Database Systems", units: 3 },
-  { code: "CSC 305", title: "Computer Networks", units: 3 },
-  { code: "CSC 307", title: "Software Engineering", units: 3 },
-  { code: "MTH 301", title: "Numerical Methods", units: 3 },
-  { code: "GST 301", title: "Entrepreneurship Studies", units: 2 },
-];
-
-//  Page
+import api from "../../../api/axiosInstance";
 
 export default function DropSemesterPage() {
   const [reason, setReason] = useState("");
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [confirmDrop, setConfirmDrop] = useState(false);
 
-  const handleSubmit = () => {
-    if (reason.trim().length > 0) setSubmitted(true);
+  const studentId = localStorage.getItem("studentId");
+
+  useEffect(() => {
+    const fetchRegisteredCourses = async () => {
+      try {
+        setLoading(true);
+        // Reuse the endpoint from your registration logic
+        const response = await api.get(`/registrations/student/${studentId}`);
+        setCourses(response.data.data?.courses || []);
+      } catch (err) {
+        console.error("Error fetching courses:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (studentId) fetchRegisteredCourses();
+  }, [studentId]);
+
+  const handleSubmit = async () => {
+    if (reason.trim().length < 20) {
+      alert("Please provide a more detailed reason (at least 20 characters).");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await api.post("/requests/drop-semester", {
+        studentId,
+        reason,
+        courses: courses.map((c) => c.code),
+        type: "SEMESTER_DROP",
+      });
+      setSubmitted(true);
+    } catch (err) {
+      alert("Failed to submit request. Please try again later.");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-blue-900">
+        <FaSpinner className="animate-spin text-3xl mb-4" />
+        <p className="text-sm font-black uppercase tracking-widest text-gray-500">
+          Loading Academic Data...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
-      {/*  Page Header  */}
+      {/* Page Header */}
       <div>
         <h1 className="text-2xl font-black text-gray-900">Drop Semester</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Review your current semester courses and submit a drop request if
-          necessary.
+          Review your current courses and submit an official drop request.
         </p>
       </div>
 
-      {/*  Warning Banner  */}
-      <div className="flex items-start gap-4 bg-yellow-50 border border-yellow-300 rounded-2xl px-6 py-5">
-        <FaExclamationTriangle className="text-yellow-500 text-xl shrink-0 mt-0.5" />
+      {/* Warning Banner */}
+      <div className="flex items-start gap-4 bg-red-50 border border-red-200 rounded-2xl px-6 py-5">
+        <FaExclamationTriangle className="text-red-500 text-xl shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-black text-yellow-800">Important Notice</p>
-          <p className="text-xs text-yellow-700 mt-1 leading-relaxed">
-            Dropping a semester is a serious academic decision. It will affect
-            your academic record and may impact your funding or scholarship
-            status. Please consult your academic advisor before proceeding.
+          <p className="text-sm font-black text-red-800 uppercase tracking-tight">
+            Immediate Academic Impact
+          </p>
+          <p className="text-xs text-red-700 mt-1 leading-relaxed">
+            Submitting this request will flag your account for "Inactive" status
+            pending approval. Ensure you have spoken with your HOD or Academic
+            Advisor before proceeding.
           </p>
         </div>
       </div>
 
-      {/*  Current Semester Courses  */}
+      {/* Current Courses Table */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-          <p className="text-sm font-black text-gray-800 uppercase tracking-wide">
-            Current Semester Courses
+        <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            Registered Courses to be Dropped
           </p>
-          <span className="text-xs text-gray-400 font-medium">
-            2024/2025 — First Semester
-          </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest">
-                  Code
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest">
-                  Course Title
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest">
-                  Units
-                </th>
-              </tr>
-            </thead>
             <tbody className="divide-y divide-gray-100">
-              {COURSES.map((course) => (
-                <tr
-                  key={course.code}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-6 py-4 text-xs font-black text-gray-500">
-                    {course.code}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-800">
-                    {course.title}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-black text-blue-900">
-                    {course.units}
+              {courses.length > 0 ? (
+                courses.map((course) => (
+                  <tr key={course.code}>
+                    <td className="px-6 py-4 text-xs font-black text-gray-500 uppercase">
+                      {course.code}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                      {course.title}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-black text-blue-900 text-right">
+                      {course.units} Units
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="3"
+                    className="px-6 py-8 text-center text-sm text-gray-400"
+                  >
+                    No active course registrations found for this semester.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/*  Drop Request Form  */}
+      {/* Drop Request Form */}
       {!submitted ? (
         <div className="bg-white border border-gray-200 rounded-2xl px-6 py-7 shadow-sm flex flex-col gap-5">
           <div>
-            <p className="text-sm font-black text-gray-800 mb-1">
-              Reason for Dropping Semester
+            <p className="text-sm font-black text-gray-800 mb-1 uppercase tracking-tight">
+              Statement of Reason
             </p>
-            <p className="text-xs text-gray-400">
-              Please provide a detailed reason for your drop request. This will
-              be reviewed by the academic office.
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Why are you requesting to drop this semester? This information is
+              required for the Senate's review.
             </p>
           </div>
 
           <textarea
             rows={5}
-            placeholder="e.g. Medical emergency, financial difficulties, personal reasons..."
+            placeholder="Please detail the circumstances (medical, personal, or financial)..."
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-blue-900 bg-gray-50 focus:bg-white transition-all duration-200 resize-none placeholder-gray-300"
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-red-500 bg-gray-50 focus:bg-white transition-all duration-200 resize-none"
           />
 
-          <div className="flex items-center gap-3">
+          {!confirmDrop ? (
             <button
-              onClick={handleSubmit}
-              disabled={reason.trim().length === 0}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-black uppercase tracking-widest px-7 py-3 rounded-lg transition-colors duration-200"
+              onClick={() => setConfirmDrop(true)}
+              disabled={reason.trim().length < 10 || courses.length === 0}
+              className="w-fit flex items-center gap-2 bg-gray-900 hover:bg-red-600 text-white text-[10px] font-black uppercase tracking-widest px-8 py-3.5 rounded-lg transition-all duration-300"
             >
-              <FaTimesCircle className="text-sm" />
-              Submit Drop Request
+              <FaTrashAlt /> Prepare Drop Request
             </button>
-            <p className="text-xs text-gray-400">
-              This action cannot be undone without visiting the registrar's
-              office.
-            </p>
-          </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-top-2">
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest px-8 py-3.5 rounded-lg transition-all"
+              >
+                {submitting ? (
+                  <FaSpinner className="animate-spin" />
+                ) : (
+                  <FaTimesCircle />
+                )}
+                Confirm and Submit Request
+              </button>
+              <button
+                onClick={() => setConfirmDrop(false)}
+                className="text-[10px] font-black uppercase text-gray-400 hover:text-gray-600 tracking-widest"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="bg-green-50 border border-green-200 rounded-2xl px-6 py-8 flex flex-col items-center text-center gap-3 shadow-sm">
-          <FaCheckCircle className="text-green-500 text-4xl" />
-          <p className="text-base font-black text-green-800">
-            Drop Request Submitted
-          </p>
-          <p className="text-sm text-green-700 max-w-md leading-relaxed">
-            Your semester drop request has been submitted successfully. The
-            academic office will review your request and contact you within 5
-            working days.
-          </p>
+        <div className="bg-green-50 border border-green-200 rounded-2xl px-6 py-12 flex flex-col items-center text-center gap-4 shadow-sm">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+            <FaCheckCircle className="text-green-500 text-3xl" />
+          </div>
+          <div>
+            <p className="text-lg font-black text-green-800">
+              Request Logged Successfully
+            </p>
+            <p className="text-sm text-green-700 max-w-md mt-1 leading-relaxed">
+              Your application has been forwarded to the Registrar. You will
+              receive an email notification once it has been processed.
+            </p>
+          </div>
         </div>
       )}
     </div>

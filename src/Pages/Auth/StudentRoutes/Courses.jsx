@@ -1,74 +1,88 @@
-import { FaBookOpen, FaChevronRight } from "react-icons/fa";
-
-//  Mock Data
-
-const COURSES = [
-  {
-    code: "CSC 301",
-    title: "Object Oriented Programming",
-    units: 3,
-    lecturer: "Dr. A. Ibrahim",
-    type: "Compulsory",
-  },
-  {
-    code: "CSC 303",
-    title: "Fundamentals of Database Systems",
-    units: 3,
-    lecturer: "Prof. B. Okafor",
-    type: "Compulsory",
-  },
-  {
-    code: "CSC 305",
-    title: "Computer Networks",
-    units: 3,
-    lecturer: "Dr. C. Eze",
-    type: "Compulsory",
-  },
-  {
-    code: "CSC 307",
-    title: "Software Engineering",
-    units: 3,
-    lecturer: "Prof. E. Adeyemi",
-    type: "Compulsory",
-  },
-  {
-    code: "MTH 301",
-    title: "Numerical Methods",
-    units: 3,
-    lecturer: "Dr. D. Musa",
-    type: "Compulsory",
-  },
-  {
-    code: "GST 301",
-    title: "Entrepreneurship Studies",
-    units: 2,
-    lecturer: "Mr. F. Bello",
-    type: "Compulsory",
-  },
-];
-
-//  Page
+import { useEffect, useState } from "react";
+import { FaBookOpen, FaChevronRight, FaSpinner } from "react-icons/fa";
+import api from "../../../api/axiosInstance";
 
 export default function CoursesPage() {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [semesterInfo, setSemesterInfo] = useState({
+    semester: "N/A",
+    session: "N/A",
+  });
+
+  const studentId = localStorage.getItem("studentId");
+
+  useEffect(() => {
+    const fetchRegisteredCourses = async () => {
+      try {
+        setLoading(true);
+        // 1. Fetch registrations for this student
+        const response = await api.get(`/registrations/student/${studentId}`);
+
+        // 2. The backend returns an array. We look for the most recent submitted one.
+        const registrations = response.data.data;
+        const activeReg =
+          registrations.find((reg) => reg.isSubmitted === true) ||
+          registrations[0];
+
+        if (activeReg && activeReg.courses) {
+          setCourses(activeReg.courses);
+          setSemesterInfo({
+            semester: activeReg.semester || "1st",
+            session: activeReg.session || "2024/2025",
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching courses:", err);
+        setError(
+          "Failed to load registered courses. Ensure you have completed registration.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (studentId) {
+      fetchRegisteredCourses();
+    }
+  }, [studentId]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-blue-900">
+        <FaSpinner className="animate-spin text-3xl mb-4" />
+        <p className="text-sm font-bold">Fetching your registered courses...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      {/*  Page Header  */}
+      {/* Page Header */}
       <div>
         <h1 className="text-2xl font-black text-gray-900">My Courses</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Your registered courses for the 2024/2025 First Semester.
+          Your registered courses for the {semesterInfo.session}{" "}
+          {semesterInfo.semester} Semester.
         </p>
       </div>
 
-      {/*  Summary Strip  */}
+      {error && (
+        <div className="p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-700 text-sm font-medium rounded">
+          {error}
+        </div>
+      )}
+
+      {/* Summary Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total Courses", value: COURSES.length },
+          { label: "Total Courses", value: courses.length },
           {
             label: "Credit Units",
-            value: COURSES.reduce((s, c) => s + c.units, 0),
+            value: courses.reduce((s, c) => s + (c.units || 0), 0),
           },
-          { label: "Semester", value: "1st" },
+          { label: "Semester", value: semesterInfo.semester },
         ].map(({ label, value }) => (
           <div
             key={label}
@@ -82,54 +96,59 @@ export default function CoursesPage() {
         ))}
       </div>
 
-      {/*  Course List  */}
+      {/* Course List */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="px-6 py-5 border-b border-gray-100">
+        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
           <p className="text-sm font-black text-gray-800 uppercase tracking-wide">
             Registered Courses
           </p>
+          <span className="text-xs font-bold text-blue-900 bg-blue-50 px-3 py-1 rounded-full uppercase">
+            Confirmed
+          </span>
         </div>
 
-        <ul className="divide-y divide-gray-100">
-          {COURSES.map((course, i) => (
-            <li
-              key={course.code}
-              className="flex items-center justify-between px-6 py-5 hover:bg-blue-50 group transition-colors duration-200"
-            >
-              <div className="flex items-center gap-4">
-                {/* Index circle */}
-                <div className="w-9 h-9 rounded-full bg-blue-100 group-hover:bg-blue-900 flex items-center justify-center shrink-0 transition-colors duration-200">
-                  <span className="text-xs font-black text-blue-900 group-hover:text-white transition-colors duration-200">
-                    {String(i + 1).padStart(2, "0")}
+        {courses.length > 0 ? (
+          <ul className="divide-y divide-gray-100">
+            {courses.map((course, i) => (
+              <li
+                key={course._id || course.code}
+                className="flex items-center justify-between px-6 py-5 hover:bg-blue-50 group transition-colors duration-200"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-9 h-9 rounded-full bg-blue-100 group-hover:bg-blue-900 flex items-center justify-center shrink-0 transition-colors duration-200">
+                    <span className="text-xs font-black text-blue-900 group-hover:text-white">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-black text-gray-800 group-hover:text-blue-900 transition-colors">
+                      {course.title}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {course.code} &bull; {course.units} Units{" "}
+                      {course.lecturer ? `&bull; ${course.lecturer}` : ""}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="hidden sm:inline text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
+                    Compulsory
                   </span>
+                  <FaChevronRight className="text-gray-300 group-hover:text-blue-900 text-xs transition-colors duration-200" />
                 </div>
-
-                <div>
-                  <p className="text-sm font-black text-gray-800 group-hover:text-blue-900 transition-colors">
-                    {course.title}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {course.code} &bull; {course.units} Units &bull;{" "}
-                    {course.lecturer}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                <span
-                  className={`hidden sm:inline text-xs font-bold px-2.5 py-1 rounded-full ${
-                    course.type === "Compulsory"
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {course.type}
-                </span>
-                <FaChevronRight className="text-gray-300 group-hover:text-blue-900 text-xs transition-colors duration-200" />
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="px-6 py-10 text-center">
+            <FaBookOpen className="mx-auto text-gray-200 text-4xl mb-3" />
+            <p className="text-gray-500 text-sm">
+              No courses found for this semester.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

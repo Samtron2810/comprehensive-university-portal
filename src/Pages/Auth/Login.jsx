@@ -1,31 +1,51 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash, FaLock, FaUser } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaLock, FaEnvelope } from "react-icons/fa";
 import heroBg from "../../assets/Images/HomeBg.jpg";
+import api from "../../api/axiosInstance";
 
 export default function LoginPage() {
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
-    const username = identifier;
+    try {
+      // 1. Call the login endpoint
+      const response = await api.post("/auth/login", { email, password });
+      const { accessToken, role, id } = response.data.data;
 
-    localStorage.setItem("username", username);
+      // 2. Save to localStorage
+      localStorage.setItem("token", accessToken);
+      localStorage.setItem("role", role);
+      localStorage.setItem("userId", id);
 
-    console.log({ username, password });
-
-    setTimeout(() => {
+      // 3. Redirect based on role
+      if (role == "STUDENT") {
+        navigate("/student-portal/dashboard", { replace: true });
+      } else if (role == "ADMIN") {
+        navigate("/admin/dashboard", { replace: true });
+      } else if (role == "LECTURER") {
+        navigate("/lecturer/dashboard", { replace: true });
+      } else {
+        setError("Unknown role. Please contact support.");
+      }
+    } catch (err) {
+      const message =
+        err.response?.data?.message || "Login failed. Please try again.";
+      setError(message);
+    } finally {
       setLoading(false);
-      navigate("/student-portal/dashboard", { replace: true });
-    }, 1500);
+    }
   };
 
   return (
@@ -39,29 +59,37 @@ export default function LoginPage() {
     >
       {/* Overlay */}
       <div className="absolute inset-0 bg-blue-950 opacity-80" />
+
       {/* Heading */}
       <h1 className="text-2xl font-black text-white mb-1 pb-5 z-10">
-        Returning Student login
+        Portal Login
       </h1>
+
       {/* Card */}
       <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-md px-8 py-8">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-xs font-semibold text-red-600">{error}</p>
+          </div>
+        )}
+
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {/* Email / Matric No */}
+          {/* Email */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">
-              Email or Matric Number
+              Email Address
             </label>
             <div className="relative">
-              <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+              <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
               <input
-                type="text"
-                placeholder="e.g. john@cu.edu or CU/2021/001"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                type="email"
+                placeholder="e.g. john@cu.edu"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full border border-gray-200 rounded-lg pl-10 pr-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-blue-900 bg-gray-50 focus:bg-white transition-all duration-200 placeholder-gray-300"
-                id="username"
               />
             </div>
           </div>
@@ -133,15 +161,15 @@ export default function LoginPage() {
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
-        {/* Register Redirect */}
+        {/* Fresher Activate Account */}
         <div className="text-center">
           <p className="text-sm text-gray-500">
-            Fresher?{" "}
+            New user?{" "}
             <Link
-              to="/student-register"
+              to="/register"
               className="font-black text-blue-900 hover:underline"
             >
-              Register now
+              Activate your account
             </Link>
           </p>
         </div>

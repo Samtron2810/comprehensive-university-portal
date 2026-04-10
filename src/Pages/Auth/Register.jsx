@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const StudentRegister = () => {
+const Register = () => {
   return (
     <div className="min-h-screen flex items-center p-20 box-border flex-col">
       <h1 className="text-4xl">NO REGISTRATION FOR NEW STUDENTS ONGOING!!!</h1>
@@ -13,4 +13,4 @@ const StudentRegister = () => {
   );
 };
 
-export default StudentRegister;
+export default Register;

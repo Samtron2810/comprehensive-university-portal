@@ -1,72 +1,24 @@
+import { useEffect, useState } from "react";
 import {
   FaDownload,
   FaCheckCircle,
   FaExclamationCircle,
   FaTimesCircle,
   FaMoneyBillWave,
+  FaSpinner,
 } from "react-icons/fa";
+import api from "../../../api/axiosInstance";
 
-//  Mock Data
-
-const SUMMARY = [
-  { label: "Total Payable", value: "₦150,000" },
-  { label: "Total Paid", value: "₦100,000" },
-  { label: "Outstanding", value: "₦50,000" },
-];
-
-const PAYMENTS = [
-  {
-    id: "RCP-2024-001",
-    description: "School Fees — 1st Semester",
-    amount: "₦80,000",
-    date: "Sep 5, 2024",
-    status: "Paid",
-  },
-  {
-    id: "RCP-2024-002",
-    description: "Library Levy",
-    amount: "₦5,000",
-    date: "Sep 5, 2024",
-    status: "Paid",
-  },
-  {
-    id: "RCP-2024-003",
-    description: "Accommodation Fee",
-    amount: "₦40,000",
-    date: "Sep 10, 2024",
-    status: "Pending",
-  },
-  {
-    id: "RCP-2024-004",
-    description: "Student Union Dues",
-    amount: "₦2,000",
-    date: "Sep 10, 2024",
-    status: "Paid",
-  },
-  {
-    id: "RCP-2024-005",
-    description: "Sports & Recreation Levy",
-    amount: "₦3,000",
-    date: "Oct 1, 2024",
-    status: "Overdue",
-  },
-  {
-    id: "RCP-2024-006",
-    description: "Medical/Health Insurance",
-    amount: "₦5,000",
-    date: "Oct 1, 2024",
-    status: "Pending",
-  },
-  {
-    id: "RCP-2024-007",
-    description: "ICT/Laboratory Levy",
-    amount: "₦15,000",
-    date: "Oct 15, 2024",
-    status: "Overdue",
-  },
-];
-
-//  Badge Component
+// Helper to format currency
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+  })
+    .format(amount)
+    .replace("NGN", "₦");
+};
 
 function StatusBadge({ status }) {
   const styles = {
@@ -96,17 +48,65 @@ function StatusBadge({ status }) {
   );
 }
 
-//  Page
-
 export default function PaymentInfoPage() {
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const studentId = localStorage.getItem("studentId");
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        setLoading(true);
+        // Replace with your actual financial endpoint
+        const response = await api.get(`/payments/student/${studentId}`);
+        setPayments(response.data.data || []);
+      } catch (err) {
+        console.error("Error fetching payments:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (studentId) fetchPayments();
+  }, [studentId]);
+
+  // Calculate Summary
+  const totalPaid = payments
+    .filter((p) => p.status === "Paid")
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  const totalOutstanding = payments
+    .filter((p) => p.status !== "Paid")
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  const SUMMARY = [
+    {
+      label: "Total Payable",
+      value: formatCurrency(totalPaid + totalOutstanding),
+    },
+    { label: "Total Paid", value: formatCurrency(totalPaid) },
+    { label: "Outstanding", value: formatCurrency(totalOutstanding) },
+  ];
+
   const handleDownload = (id) => {
-    // hook up receipt download logic here
-    alert(`Downloading receipt for ${id}`);
+    alert(`Generating PDF Receipt for Transaction: ${id}`);
+    // You can use libraries like jsPDF here later
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-blue-900">
+        <FaSpinner className="animate-spin text-3xl mb-4" />
+        <p className="text-sm font-bold uppercase tracking-widest">
+          Loading Financial Records...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
-      {/*  Page Header  */}
+      {/* Page Header */}
       <div>
         <h1 className="text-2xl font-black text-gray-900">Payment Info</h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -114,24 +114,26 @@ export default function PaymentInfoPage() {
         </p>
       </div>
 
-      {/*  Summary Cards  */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {SUMMARY.map(({ label, value }, i) => (
           <div
             key={label}
             className={`rounded-xl px-6 py-6 flex flex-col gap-2 border ${
-              i === 2
-                ? "bg-red-50 border-red-200"
-                : "bg-white border-gray-200 hover:border-blue-900 hover:shadow-md"
+              i === 2 && totalOutstanding > 0
+                ? "bg-red-50 border-red-200 shadow-sm"
+                : "bg-white border-gray-200 hover:border-blue-900"
             } transition-all duration-200`}
           >
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <div
+              className={`w-10 h-10 rounded-full flex items-center justify-center ${i === 2 ? "bg-red-100" : "bg-blue-100"}`}
+            >
               <FaMoneyBillWave
                 className={`text-base ${i === 2 ? "text-red-500" : "text-blue-900"}`}
               />
             </div>
             <p
-              className={`text-2xl font-black ${i === 2 ? "text-red-600" : "text-blue-900"}`}
+              className={`text-2xl font-black ${i === 2 && totalOutstanding > 0 ? "text-red-600" : "text-blue-900"}`}
             >
               {value}
             </p>
@@ -142,81 +144,83 @@ export default function PaymentInfoPage() {
         ))}
       </div>
 
-      {/*  Payment History Table  */}
+      {/* Payment History Table */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-        {/* Header */}
         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
           <p className="text-sm font-black text-gray-800 uppercase tracking-wide">
             Payment History
           </p>
-          <p className="text-xs text-gray-400 font-medium">2024/2025 Session</p>
+          <p className="text-xs text-gray-400 font-medium">
+            Academic Session 2024/2025
+          </p>
         </div>
 
-        {/* Table — desktop */}
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest">
-                  Receipt ID
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest">
-                  Description
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest">
-                  Amount
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest">
-                  Date
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest">
-                  Status
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest">
-                  Receipt
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {PAYMENTS.map((payment) => (
-                <tr
-                  key={payment.id}
-                  className="hover:bg-blue-50 group transition-colors duration-200"
-                >
-                  <td className="px-6 py-4 text-xs font-bold text-gray-400">
-                    {payment.id}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-700 group-hover:text-blue-900 transition-colors">
-                    {payment.description}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-black text-gray-800">
-                    {payment.amount}
-                  </td>
-                  <td className="px-6 py-4 text-xs text-gray-500">
-                    {payment.date}
-                  </td>
-                  <td className="px-6 py-4">
-                    <StatusBadge status={payment.status} />
-                  </td>
-                  <td className="px-6 py-4">
-                    {payment.status === "Paid" ? (
-                      <button
-                        onClick={() => handleDownload(payment.id)}
-                        className="flex items-center gap-1.5 text-xs font-bold text-blue-900 hover:underline"
-                      >
-                        <FaDownload className="text-xs" />
-                        Download
-                      </button>
-                    ) : (
-                      <span className="text-xs text-gray-300 font-medium">
-                        —
-                      </span>
-                    )}
-                  </td>
+          {payments.length > 0 ? (
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100 text-left">
+                  <th className="px-6 py-3 text-xs font-black text-gray-500 uppercase">
+                    Receipt ID
+                  </th>
+                  <th className="px-6 py-3 text-xs font-black text-gray-500 uppercase">
+                    Description
+                  </th>
+                  <th className="px-6 py-3 text-xs font-black text-gray-500 uppercase">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-xs font-black text-gray-500 uppercase">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-xs font-black text-gray-500 uppercase">
+                    Action
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {payments.map((payment) => (
+                  <tr
+                    key={payment._id || payment.id}
+                    className="hover:bg-blue-50 group transition-colors"
+                  >
+                    <td className="px-6 py-4 text-xs font-bold text-gray-400 uppercase">
+                      {payment.transactionRef || payment.id || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-semibold text-gray-700 group-hover:text-blue-900">
+                      {payment.description}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-black text-gray-800">
+                      {formatCurrency(payment.amount)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <StatusBadge status={payment.status} />
+                    </td>
+                    <td className="px-6 py-4">
+                      {payment.status === "Paid" ? (
+                        <button
+                          onClick={() => handleDownload(payment.id)}
+                          className="flex items-center gap-1.5 text-xs font-bold text-blue-900 hover:underline"
+                        >
+                          <FaDownload /> Download
+                        </button>
+                      ) : (
+                        <button className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-md hover:bg-blue-900 hover:text-white transition-all">
+                          Pay Now
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="py-20 text-center">
+              <FaMoneyBillWave className="mx-auto text-gray-200 text-5xl mb-4" />
+              <p className="text-gray-500 font-medium">
+                No payment records found.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

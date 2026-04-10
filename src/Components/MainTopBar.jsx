@@ -47,10 +47,10 @@ function MainTopBar() {
 
         {/* Login Button  */}
         <Link
-          to="/student-login"
+          to="/login"
           className="hidden md:flex items-center gap-2 bg-[#1a3a6b] hover:bg-[#0f2548] text-white text-[12px] font-bold tracking-widest uppercase px-5 py-2.5 rounded transition-colors duration-200"
         >
-          Student Login
+          Portal Login
           <FaUser className="text-[11px]" />
         </Link>
 
