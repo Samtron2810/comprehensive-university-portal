@@ -41,7 +41,7 @@ export default function Hero() {
             to="/register"
             className="inline-flex items-center gap-2 border-2 border-white text-white text-xs font-bold uppercase tracking-widest px-7 py-3 rounded hover:bg-white hover:text-blue-950 transition-colors duration-200"
           >
-            Fresher Registeration
+            Fresher Activation
           </Link>
         </div>
       </div>

@@ -6,6 +6,11 @@ import {
   FaArrowRight,
   FaCalendarAlt,
   FaSpinner,
+  FaUniversity,
+  FaIdCard,
+  FaLayerGroup,
+  FaFlask,
+  FaUserTag,
 } from "react-icons/fa";
 import api from "../../../api/axiosInstance";
 
@@ -15,12 +20,15 @@ export default function Dashboard() {
   const [activeSemester, setActiveSemester] = useState("N/A");
   const [loading, setLoading] = useState(true);
 
-  // ── Get Student Info from localStorage (saved by UserPortal) ──────────────
+  //  Get Student Info from localStorage (saved by UserPortal)
   const firstName = localStorage.getItem("firstName") || "Student";
   const lastName = localStorage.getItem("lastName") || "";
   const level = localStorage.getItem("level") || "N/A";
   const department = localStorage.getItem("department") || "N/A";
   const faculty = localStorage.getItem("faculty") || "N/A";
+  const matricNumber = localStorage.getItem("matricNumber") || "N/A";
+  const admissionType = localStorage.getItem("admissionType") || "N/A";
+  const status = localStorage.getItem("status") || "ACTIVE";
   const session = "2024/2025";
 
   const today = new Date().toLocaleDateString("en-US", {
@@ -30,20 +38,19 @@ export default function Dashboard() {
     day: "numeric",
   });
 
-  // ── Fetch Dashboard Data ──────────────────────────────────────────────────
+  //  Fetch Dashboard Data
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
 
-        // Run all requests in parallel
         const [regRes, cgpaRes, semRes] = await Promise.allSettled([
           api.get("/registrations/my-registrations"),
           api.get("/cgpa/my-cgpa"),
           api.get("/semesters/active"),
         ]);
 
-        // 1. Registered courses — get the most recent approved registration
+        // 1. Registered courses
         if (regRes.status === "fulfilled") {
           const registrations = regRes.value.data.data;
           if (registrations && registrations.length > 0) {
@@ -82,11 +89,22 @@ export default function Dashboard() {
 
   const totalUnits = courses.reduce((sum, c) => sum + (c.units || 0), 0);
 
+  //  Stats
   const STATS = [
     { label: "Registered Courses", value: courses.length },
     { label: "Credit Units", value: totalUnits },
     { label: "CGPA", value: cgpa },
     { label: "Semester", value: activeSemester },
+  ];
+
+  //  Student Detail Cards
+  const DETAILS = [
+    { icon: FaIdCard, label: "Matric Number", value: matricNumber },
+    { icon: FaUniversity, label: "Faculty", value: faculty },
+    { icon: FaFlask, label: "Department", value: department },
+    { icon: FaLayerGroup, label: "Level", value: `${level} Level` },
+    { icon: FaUserTag, label: "Admission Type", value: admissionType },
+    { icon: FaCalendarAlt, label: "Session", value: session },
   ];
 
   if (loading) {
@@ -99,7 +117,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* ── Welcome Banner ── */}
+      {/*  Welcome Banner  */}
       <div className="bg-blue-900 rounded-2xl px-8 py-7 flex items-center justify-between gap-6">
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shrink-0 border-4 border-blue-700">
@@ -110,24 +128,59 @@ export default function Dashboard() {
               {today}
             </p>
             <h1 className="text-white text-2xl font-black leading-snug">
-              Welcome back, {firstName}! 👋
+              Welcome , {firstName} {lastName}!
             </h1>
             <p className="text-blue-200 text-sm mt-1">
-              {department} &mdash; {faculty} &mdash; {level} Level &mdash;{" "}
-              {session}
+              Here's your academic overview for the {session} session.
             </p>
           </div>
         </div>
 
         <div className="hidden md:flex flex-col items-end gap-1 shrink-0">
-          <span className="bg-yellow-400 text-blue-900 text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
+          <span
+            className={`text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full ${
+              status === "ACTIVE"
+                ? "bg-green-400 text-green-900"
+                : "bg-red-400 text-red-900"
+            }`}
+          >
+            {status}
+          </span>
+          <span className="text-blue-300 text-xs mt-1">
             {activeSemester} Semester
           </span>
           <span className="text-blue-300 text-xs">{session} Session</span>
         </div>
       </div>
 
-      {/* ── Stats Row ── */}
+      {/*  Student Details Row  */}
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <p className="text-xs font-black text-gray-500 uppercase tracking-widest">
+            Student Information
+          </p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y divide-gray-100">
+          {DETAILS.map(({ icon: Icon, label, value }) => (
+            <div
+              key={label}
+              className="flex flex-col gap-2 px-5 py-4 hover:bg-blue-50 transition-colors duration-200 group"
+            >
+              <div className="flex items-center gap-2">
+                <Icon className="text-blue-900 text-xs group-hover:text-blue-700" />
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+                  {label}
+                </p>
+              </div>
+              <p className="text-sm font-black text-gray-800 leading-snug">
+                {value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/*  Stats Row  */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {STATS.map(({ label, value }) => (
           <div
@@ -142,7 +195,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* ── Enrolled Courses ── */}
+      {/*  Enrolled Courses  */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div className="flex items-center gap-2">
