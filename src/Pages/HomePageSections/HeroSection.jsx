@@ -17,9 +17,6 @@ export default function Hero() {
 
       {/* Hero Content */}
       <div className="relative z-10 flex-1 flex flex-col justify-center px-8 md:px-20 pt-16 pb-10 max-w-3xl">
-        {/* Accent line */}
-        <div className="w-12 h-1 bg-yellow-400 mb-6 rounded-full" />
-
         <h1 className="text-white font-black uppercase leading-tight tracking-tight text-4xl md:text-5xl">
           Welcome to the Future <br />
           <span className="text-yellow-400">of Your Education.</span>
@@ -58,7 +55,7 @@ export default function Hero() {
           to="/register"
           className="shrink-0 border-2 border-white text-white text-xs font-black uppercase tracking-widest px-6 py-2 hover:bg-white hover:text-blue-900 transition-all duration-200 rounded"
         >
-          New Student Registration
+          New Student Activation
         </Link>
       </div>
     </section>

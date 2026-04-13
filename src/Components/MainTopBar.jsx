@@ -87,11 +87,11 @@ function MainTopBar() {
             ))}
             <li className="px-6 py-3">
               <Link
-                to="/student-login"
+                to="/login"
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center justify-center gap-2 bg-[#1a3a6b] text-white text-[12px] font-bold tracking-widest uppercase px-4 py-2.5 rounded w-full"
               >
-                Student Login <FaUser className="text-[11px]" />
+                Portal Login <FaUser className="text-[11px]" />
               </Link>
             </li>
           </ul>
