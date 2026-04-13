@@ -83,7 +83,7 @@ export default function PortalTopBar() {
               <div className="w-8 h-8 rounded-full bg-blue-900 flex items-center justify-center">
                 <FaUserCircle className="text-white text-lg" />
               </div>
-              <span className="text-sm font-bold text-gray-700 hidden sm:block">
+              <span className="text-sm font-bold text-gray-700 hidden sm:block capitalize">
                 {STUDENT.name}
               </span>
               <FaChevronDown
@@ -92,7 +92,7 @@ export default function PortalTopBar() {
             </button>
 
             {dropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden capitalize">
                 <div className="px-5 py-4 border-b border-gray-100 bg-blue-50">
                   <p className="text-sm font-black text-blue-900">
                     {STUDENT.name}

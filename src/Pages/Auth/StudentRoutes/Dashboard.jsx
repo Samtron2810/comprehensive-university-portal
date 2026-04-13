@@ -127,7 +127,7 @@ export default function Dashboard() {
             <p className="text-blue-300 text-xs font-semibold uppercase tracking-widest mb-1">
               {today}
             </p>
-            <h1 className="text-white text-2xl font-black leading-snug">
+            <h1 className="text-white text-2xl font-black leading-snug capitalize">
               Welcome , {firstName} {lastName}!
             </h1>
             <p className="text-blue-200 text-sm mt-1">

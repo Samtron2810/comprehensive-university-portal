@@ -8,12 +8,12 @@ export default function PortalLayout() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
-  const userId = localStorage.getItem("userId");
-  const role = localStorage.getItem("role");
-
   useEffect(() => {
-    // 1. If no token or userId, boot to login
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+    const role = localStorage.getItem("role");
+
+    // 1. No token or userId — boot to login
     if (!token || !userId) {
       navigate("/login", { replace: true });
       return;
@@ -21,33 +21,34 @@ export default function PortalLayout() {
 
     const fetchProfile = async () => {
       try {
-        // 2. Only fetch student profile if the role is STUDENT
+        // 2. Only fetch student profile if role is STUDENT
         if (role === "STUDENT") {
           const res = await api.get(`/students/user/${userId}`);
           const data = res.data.data;
 
-          // Save student details for use across components
+          // Save all student details for use across portal pages
           localStorage.setItem("studentId", data._id);
           localStorage.setItem("firstName", data.firstName);
           localStorage.setItem("lastName", data.lastName);
           localStorage.setItem("level", data.level);
           localStorage.setItem("department", data.department?.name || "");
           localStorage.setItem("faculty", data.faculty?.name || "");
+          localStorage.setItem("matricNumber", data.matricNumber || "");
+          localStorage.setItem("admissionType", data.admissionType || "");
+          localStorage.setItem("status", data.status || "ACTIVE");
         }
 
-        // 3. For ADMIN and LECTURER, no profile fetch needed for now
-        // Just let them through — their profile fetches will happen
-        // inside their respective dashboard pages
+        // 3. ADMIN and LECTURER — no profile fetch needed here
+        // their dashboard pages handle their own data fetching
 
         setLoading(false);
       } catch (err) {
-        // Only clear and redirect if it's an auth error
         if (err.response?.status === 401 || err.response?.status === 403) {
+          // Auth error — clear everything and boot to login
           localStorage.clear();
           navigate("/login", { replace: true });
         } else {
-          // For other errors (500, network, etc.) still let them in
-          // so a backend hiccup doesn't lock them out
+          // Network/server error — let them through, don't lock out
           console.error("Profile fetch error:", err.message);
           setLoading(false);
         }
@@ -55,12 +56,12 @@ export default function PortalLayout() {
     };
 
     fetchProfile();
-  }, [token, userId, role, navigate]);
+  }, [navigate]);
 
   if (loading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-900"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-900" />
       </div>
     );
   }

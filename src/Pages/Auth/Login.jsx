@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaLock, FaEnvelope } from "react-icons/fa";
 import heroBg from "../../assets/Images/HomeBg.jpg";
@@ -14,27 +14,40 @@ export default function LoginPage() {
 
   const navigate = useNavigate();
 
+  // ── If already logged in, redirect away from login page ──────────────────
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (token && role) {
+      if (role === "STUDENT")
+        navigate("/user-portal/student-dashboard", { replace: true });
+      else if (role === "ADMIN")
+        navigate("/user-portal/admin-dashboard", { replace: true });
+      else if (role === "LECTURER")
+        navigate("/user-portal/lecturer-dashboard", { replace: true });
+    }
+  }, [navigate]);
+
+  // ── Handle Login Submit ───────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      // 1. Call the login endpoint
       const response = await api.post("/auth/login", { email, password });
       const { accessToken, role, id } = response.data.data;
 
-      // 2. Save to localStorage
       localStorage.setItem("token", accessToken);
       localStorage.setItem("role", role);
       localStorage.setItem("userId", id);
 
-      // 3. Redirect based on role
-      if (role == "STUDENT") {
+      if (role === "STUDENT") {
         navigate("/user-portal/student-dashboard", { replace: true });
-      } else if (role == "ADMIN") {
+      } else if (role === "ADMIN") {
         navigate("/user-portal/admin-dashboard", { replace: true });
-      } else if (role == "LECTURER") {
+      } else if (role === "LECTURER") {
         navigate("/user-portal/lecturer-dashboard", { replace: true });
       } else {
         setError("Unknown role. Please contact support.");
@@ -59,6 +72,14 @@ export default function LoginPage() {
     >
       {/* Overlay */}
       <div className="absolute inset-0 bg-blue-950 opacity-80" />
+
+      {/* Back to Home */}
+      <Link
+        to="/"
+        className="fixed top-10 left-10 z-20 flex items-center gap-2 text-sm px-4 py-2 rounded-xl border-2 border-blue-600 text-blue-700 bg-white hover:bg-blue-100 hover:shadow-md transition-all duration-200"
+      >
+        ← Back to Home
+      </Link>
 
       {/* Heading */}
       <h1 className="text-2xl font-black text-white mb-1 pb-5 z-10">
@@ -161,7 +182,7 @@ export default function LoginPage() {
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
-        {/* Fresher Activate Account */}
+        {/* Activate Account */}
         <div className="text-center">
           <p className="text-sm text-gray-500">
             New user?{" "}
