@@ -155,16 +155,16 @@ export default function Dashboard() {
 
       {/*  Student Details Row  */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className="px-6 py-4 border-b border-b-blue-300 ">
           <p className="text-xs font-black text-gray-500 uppercase tracking-widest">
             Student Information
           </p>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y divide-gray-100">
+        <div className="grid grid-flow-col auto-cols-max gap-2">
           {DETAILS.map(({ icon: Icon, label, value }) => (
             <div
               key={label}
-              className="flex flex-col gap-2 px-5 py-4 hover:bg-blue-50 transition-colors duration-200 group"
+              className="flex flex-col gap-2 px-5 py-4 border-r-2 border-r-blue-300  hover:bg-blue-50 transition-colors duration-200 group"
             >
               <div className="flex items-center gap-2">
                 <Icon className="text-blue-900 text-xs group-hover:text-blue-700" />

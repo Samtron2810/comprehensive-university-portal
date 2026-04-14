@@ -14,7 +14,7 @@ export default function LoginPage() {
 
   const navigate = useNavigate();
 
-  // ── If already logged in, redirect away from login page ──────────────────
+  //  If already logged in, redirect away from login page
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -29,7 +29,7 @@ export default function LoginPage() {
     }
   }, [navigate]);
 
-  // ── Handle Login Submit ───────────────────────────────────────────────────
+  //  Handle Login Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -76,9 +76,9 @@ export default function LoginPage() {
       {/* Back to Home */}
       <Link
         to="/"
-        className="fixed top-10 left-10 z-20 flex items-center gap-2 text-sm px-4 py-2 rounded-xl border-2 border-blue-600 text-blue-700 bg-white hover:bg-blue-100 hover:shadow-md transition-all duration-200"
+        className="fixed h-12 w-12 top-10 left-10 z-20 flex items-center gap-2 text-xl font-extrabold px-4 py-2 rounded-full border-2 border-white text-white bg-none hover:bg-white hover:text-blue-900 hover:border-blue-900 hover:shadow-md transition-all duration-200"
       >
-        ← Back to Home
+        ←
       </Link>
 
       {/* Heading */}
