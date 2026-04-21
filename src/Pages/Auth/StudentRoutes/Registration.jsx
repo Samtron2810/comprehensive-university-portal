@@ -23,7 +23,8 @@ export default function RegistrationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  const studentId = localStorage.getItem("studentId");
+  const studentId =
+    localStorage.getItem("studentId") || localStorage.getItem("userId");
 
   // ── Step 1: On mount — check current registration + fetch eligible courses ──
   useEffect(() => {
@@ -77,6 +78,7 @@ export default function RegistrationPage() {
     const newRegId = res.data.data._id;
     setRegistrationId(newRegId);
     setRegStatus("DRAFT");
+    localStorage.setItem("registrationId", newRegId);
     return newRegId;
   };
 

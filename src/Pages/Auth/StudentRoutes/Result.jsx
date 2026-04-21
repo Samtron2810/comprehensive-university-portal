@@ -1,202 +1,425 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
+import axiosInstance from "../../../api/axiosInstance";
 import {
-  FaDownload,
-  FaChevronDown,
+  FaChartBar,
   FaSpinner,
-  FaGraduationCap,
+  FaExclamationTriangle,
+  FaInbox,
+  FaDownload,
+  FaFilter,
 } from "react-icons/fa";
-import api from "../../../api/axiosInstance";
 
-const GRADE_COLOR = {
-  A: "text-green-600 bg-green-100",
-  B: "text-blue-700 bg-blue-100",
-  C: "text-yellow-700 bg-yellow-100",
-  D: "text-orange-600 bg-orange-100",
-  F: "text-red-600 bg-red-100",
+/* ── Grade → colour mapping ── */
+const GRADE_BADGE = {
+  A: "bg-green-100  text-green-700",
+  B: "bg-blue-100   text-blue-700",
+  C: "bg-yellow-100 text-yellow-700",
+  D: "bg-orange-100 text-orange-700",
+  E: "bg-red-100    text-red-600",
+  F: "bg-red-200    text-red-700",
 };
 
-export default function ResultPage() {
-  const [resultsData, setResultsData] = useState({});
-  const [semesters, setSemesters] = useState([]);
-  const [selected, setSelected] = useState("");
-  const [loading, setLoading] = useState(true);
+function gradeBadge(grade) {
+  return GRADE_BADGE[grade?.toUpperCase()] ?? "bg-gray-100 text-gray-600";
+}
 
-  const studentId = localStorage.getItem("studentId");
+/* ── GPA colour ── */
+function gpaColor(gpa) {
+  if (!gpa && gpa !== 0) return "text-gray-500";
+  if (gpa >= 4.5) return "text-green-600";
+  if (gpa >= 3.5) return "text-blue-600";
+  if (gpa >= 2.4) return "text-yellow-600";
+  return "text-red-600";
+}
+
+export default function Result() {
+  /* ─────── state ─────── */
+  const [results, setResults] = useState([]);
+  const [gpaData, setGpaData] = useState(null); // { gpa, cgpa, ... }
+  const [sessions, setSessions] = useState([]); // derived from results
+  const [activeSession, setActiveSession] = useState("all");
+
+  const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const firstName = localStorage.getItem("firstName") || "";
+  const lastName = localStorage.getItem("lastName") || "";
+  const matric = localStorage.getItem("matricNumber") || "";
+
+  /* ─────── fetch results + GPA in parallel ─────── */
+  const fetchAll = useCallback(async (session) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = session && session !== "all" ? { session } : {};
+
+      const [resultsRes, gpaRes] = await Promise.allSettled([
+        axiosInstance.get("/results/my-results", { params }),
+        axiosInstance.get("/gpa/my-gpa"),
+      ]);
+
+      if (resultsRes.status === "fulfilled") {
+        const raw = resultsRes.value.data;
+        // Backend always returns response.data.data
+        const list = Array.isArray(raw.data) ? raw.data : [];
+        setResults(list);
+
+        // Derive unique sessions for the filter dropdown
+        const uniqueSessions = [
+          ...new Set(list.map((r) => r.session).filter(Boolean)),
+        ]
+          .sort()
+          .reverse();
+        setSessions(uniqueSessions);
+      } else {
+        console.error("Results fetch failed:", resultsRes.reason);
+        setError("Could not load your results. Please try again.");
+      }
+
+      if (gpaRes.status === "fulfilled") {
+        const raw = gpaRes.value.data;
+        // Backend always returns response.data.data
+        setGpaData(raw.data ?? raw);
+      } else {
+        console.error("GPA fetch failed:", gpaRes.reason);
+        // Don't block the page — GPA cards just show "—"
+      }
+    } catch (err) {
+      console.error("Result page error:", err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get(`/results/student/${studentId}`);
+    fetchAll(activeSession === "all" ? null : activeSession);
+  }, [fetchAll, activeSession]);
 
-        // Assuming backend returns an object keyed by "Session - Semester"
-        // e.g., { "2024/2025 - First Semester": { gpa: 4.2, courses: [...] } }
-        const data = response.data.data;
-        setResultsData(data);
+  /* ─────── download transcript ─────── */
+  const handleDownloadTranscript = async () => {
+    try {
+      setDownloading(true);
+      const response = await axiosInstance.get("/results/transcript", {
+        responseType: "blob",
+      });
 
-        const keys = Object.keys(data);
-        setSemesters(keys);
-        if (keys.length > 0) setSelected(keys[0]);
-      } catch (err) {
-        console.error("Error fetching results:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (studentId) fetchResults();
-  }, [studentId]);
-
-  const handleDownload = () => {
-    alert(`Generating Official Transcript for ${selected}...`);
+      const contentType = response.headers["content-type"] ?? "application/pdf";
+      const blob = new Blob([response.data], { type: contentType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `transcript_${matric || "student"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Transcript download error:", err);
+      alert("Failed to download transcript. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
   };
 
+  /* ─────── derived values ─────── */
+  const cgpa = gpaData?.cgpa ?? gpaData?.CGPA ?? null;
+  const currentGpa = gpaData?.gpa ?? gpaData?.GPA ?? null;
+  const totalUnits = gpaData?.totalCreditUnits ?? gpaData?.totalUnits ?? null;
+
+  // Group results by semester for sectioned display
+  const grouped = results.reduce((acc, r) => {
+    const key = r.semester
+      ? `${r.session ?? ""} — ${r.semester}`
+      : (r.session ?? "General");
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(r);
+    return acc;
+  }, {});
+  const groupKeys = Object.keys(grouped);
+
+  /* ─────── loading ─────── */
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-blue-900">
-        <FaSpinner className="animate-spin text-3xl mb-4" />
-        <p className="text-sm font-black uppercase tracking-widest text-gray-500">
-          Compiling Academic Record...
-        </p>
+      <div className="flex items-center justify-center h-64 text-blue-600 gap-3">
+        <FaSpinner className="animate-spin text-2xl" />
+        <span className="font-medium text-lg">Loading your results…</span>
       </div>
     );
   }
 
-  // Fallback if no results exist yet
-  if (semesters.length === 0) {
+  /* ─────── error ─────── */
+  if (error) {
     return (
-      <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
-        <FaGraduationCap className="mx-auto text-5xl text-gray-200 mb-4" />
-        <h2 className="text-xl font-bold text-gray-800">No Results Found</h2>
-        <p className="text-sm text-gray-500">
-          Your academic records will appear here once uploaded by the
-          department.
-        </p>
+      <div className="flex flex-col items-center justify-center h-64 gap-3 text-red-600">
+        <FaExclamationTriangle className="text-4xl" />
+        <p className="font-medium text-center px-6">{error}</p>
+        <button
+          onClick={() =>
+            fetchAll(activeSession === "all" ? null : activeSession)
+          }
+          className="mt-2 px-5 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }
-
-  const result = resultsData[selected];
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Page Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900">
-            Academic Results
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Track your semester-by-semester performance and CGPA.
-          </p>
+    <div className="p-4 md:p-6 space-y-6">
+      {/* ── Page header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-blue-100 text-blue-700 p-3 rounded-xl">
+            <FaChartBar className="text-xl" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">My Results</h1>
+            <p className="text-sm text-gray-500 capitalize">
+              {firstName} {lastName}
+              {matric ? ` - ${matric}` : ""}
+            </p>
+          </div>
         </div>
 
         <button
-          onClick={handleDownload}
-          className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white text-xs font-black uppercase tracking-widest px-5 py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/10"
+          onClick={handleDownloadTranscript}
+          disabled={downloading}
+          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-60 transition-colors shadow-sm self-start sm:self-auto"
         >
-          <FaDownload className="text-xs" /> Download PDF
+          {downloading ? (
+            <FaSpinner className="animate-spin" />
+          ) : (
+            <FaDownload />
+          )}
+          {downloading ? "Downloading…" : "Download Transcript"}
         </button>
       </div>
 
-      {/* Semester Filter */}
-      <div className="relative w-full sm:w-80">
-        <select
-          value={selected}
-          onChange={(e) => setSelected(e.target.value)}
-          className="w-full appearance-none bg-white border border-gray-200 rounded-xl px-5 py-3 text-sm font-bold text-gray-700 focus:outline-none focus:border-blue-900 transition-colors cursor-pointer shadow-sm"
-        >
-          {semesters.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <FaChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none" />
+      {/* ── GPA summary cards  */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <GpaCard label="CGPA" value={cgpa} color="blue" />
+        <GpaCard label="Current GPA" value={currentGpa} color="indigo" />
+        <GpaCard
+          label="Total Units"
+          value={totalUnits}
+          color="teal"
+          isGpa={false}
+        />
+        <GpaCard
+          label="Courses Sat"
+          value={results.length}
+          color="purple"
+          isGpa={false}
+        />
       </div>
 
-      {/* GPA Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Semester GPA", value: result?.gpa?.toFixed(2) || "0.00" },
-          { label: "Current CGPA", value: result?.cgpa?.toFixed(2) || "0.00" },
-          { label: "Courses Done", value: result?.courses?.length || 0 },
-          {
-            label: "Total Units",
-            value:
-              result?.courses?.reduce((s, c) => s + (c.units || 0), 0) || 0,
-          },
-        ].map(({ label, value }) => (
-          <div
-            key={label}
-            className="bg-white border border-gray-200 rounded-xl px-5 py-5 hover:border-blue-900 hover:shadow-md transition-all duration-200"
-          >
-            <p className="text-2xl font-black text-blue-900">{value}</p>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
-              {label}
-            </p>
+      {/* ── Session filter ── */}
+      {sessions.length > 0 && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <FaFilter className="text-gray-400 text-sm" />
+          <span className="text-sm font-medium text-gray-600">
+            Filter by session:
+          </span>
+          <div className="flex flex-wrap gap-2">
+            <FilterBtn
+              label="All Sessions"
+              active={activeSession === "all"}
+              onClick={() => setActiveSession("all")}
+            />
+            {sessions.map((s) => (
+              <FilterBtn
+                key={s}
+                label={s}
+                active={activeSession === s}
+                onClick={() => setActiveSession(s)}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      {/* Result Table */}
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-          <p className="text-xs font-black text-blue-900 uppercase tracking-widest">
-            {selected} Detailed Breakdown
+      {/* ── Empty state ── */}
+      {results.length === 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 shadow-sm">
+          <FaInbox className="text-5xl mx-auto mb-3" />
+          <p className="text-lg font-medium">No results found</p>
+          <p className="text-sm mt-1">
+            {activeSession !== "all"
+              ? "No results for the selected session. Try a different filter."
+              : "Results will appear here once they are published by your lecturers."}
           </p>
         </div>
+      )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-white border-b border-gray-100">
-                {["Code", "Course Title", "Units", "Score", "Grade", "GP"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="text-left px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest"
-                    >
-                      {h}
-                    </th>
-                  ),
+      {/* ── Results grouped by semester ── */}
+      {groupKeys.map((group) => {
+        const groupResults = grouped[group];
+        const groupUnits = groupResults.reduce(
+          (s, r) => s + (r.creditUnit ?? r.unit ?? 0),
+          0,
+        );
+        const groupPoints = groupResults.reduce(
+          (s, r) =>
+            s +
+            (r.gradePoint ?? r.qualityPoint ?? 0) *
+              (r.creditUnit ?? r.unit ?? 0),
+          0,
+        );
+        const groupGpa =
+          groupUnits > 0 ? (groupPoints / groupUnits).toFixed(2) : null;
+
+        return (
+          <div
+            key={group}
+            className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm"
+          >
+            {/* Group header */}
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="font-semibold text-gray-700">{group}</span>
+              <div className="flex items-center gap-4 text-sm">
+                <span className="text-gray-500">
+                  {groupResults.length} course
+                  {groupResults.length !== 1 ? "s" : ""}
+                </span>
+                <span className="text-gray-500">{groupUnits} units</span>
+                {groupGpa && (
+                  <span
+                    className={`font-bold ${gpaColor(parseFloat(groupGpa))}`}
+                  >
+                    GPA: {groupGpa}
+                  </span>
                 )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {result?.courses?.map((course) => (
-                <tr
-                  key={course.code}
-                  className="hover:bg-blue-50/50 group transition-colors"
-                >
-                  <td className="px-6 py-4 text-xs font-black text-gray-500">
-                    {course.code}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-bold text-gray-700 group-hover:text-blue-900">
-                    {course.title}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600 font-semibold">
-                    {course.units}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-black text-gray-800">
-                    {course.score}%
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`text-[10px] font-black px-2.5 py-1 rounded-full ${GRADE_COLOR[course.grade] || "bg-gray-100 text-gray-600"}`}
-                    >
-                      {course.grade}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-black text-blue-900">
-                    {course.points?.toFixed(1)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-gray-100">
+                  <tr className="text-gray-500 uppercase text-xs tracking-wide">
+                    <th className="text-left px-4 py-3">#</th>
+                    <th className="text-left px-4 py-3">Course Code</th>
+                    <th className="text-left px-4 py-3">Course Title</th>
+                    <th className="text-center px-4 py-3">Units</th>
+                    <th className="text-center px-4 py-3">Score</th>
+                    <th className="text-center px-4 py-3">Grade</th>
+                    <th className="text-center px-4 py-3">Grade Points</th>
+                    <th className="text-center px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {groupResults.map((result, idx) => {
+                    const grade = result.grade?.toUpperCase();
+                    const passed = grade && grade !== "F" && grade !== "E";
+                    return (
+                      <tr
+                        key={result._id ?? idx}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-4 py-3 text-gray-400">{idx + 1}</td>
+                        <td className="px-4 py-3 font-semibold text-blue-700">
+                          {result.courseCode ??
+                            result.course?.courseCode ??
+                            "—"}
+                        </td>
+                        <td className="px-4 py-3 text-gray-800 max-w-xs">
+                          {result.courseTitle ??
+                            result.course?.courseTitle ??
+                            result.course?.title ??
+                            "—"}
+                        </td>
+                        <td className="px-4 py-3 text-center text-gray-600">
+                          {result.creditUnit ?? result.unit ?? "—"}
+                        </td>
+                        <td className="px-4 py-3 text-center font-medium text-gray-800">
+                          {result.score ?? result.totalScore ?? "—"}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {grade ? (
+                            <span
+                              className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${gradeBadge(grade)}`}
+                            >
+                              {grade}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center text-gray-600">
+                          {result.gradePoint ?? result.qualityPoint ?? "—"}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {grade ? (
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                                passed
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              {passed ? "Passed" : "Failed"}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">
+                              Pending
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
     </div>
+  );
+}
+
+/* ── Helper: GPA summary card ── */
+function GpaCard({ label, value, color, isGpa = true }) {
+  const colors = {
+    blue: "bg-blue-50   text-blue-700   border-blue-200",
+    indigo: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    teal: "bg-teal-50   text-teal-700   border-teal-200",
+    purple: "bg-purple-50 text-purple-700 border-purple-200",
+  };
+
+  const displayValue =
+    value !== null && value !== undefined
+      ? isGpa
+        ? parseFloat(value).toFixed(2)
+        : value
+      : "—";
+
+  return (
+    <div className={`rounded-xl border p-4 flex flex-col ${colors[color]}`}>
+      <span className="text-xs font-medium uppercase tracking-wide opacity-70">
+        {label}
+      </span>
+      <span className="text-2xl font-bold mt-1">{displayValue}</span>
+    </div>
+  );
+}
+
+/* ── Helper: filter button ── */
+function FilterBtn({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+        active
+          ? "bg-blue-600 text-white border-blue-600"
+          : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+      }`}
+    >
+      {label}
+    </button>
   );
 }

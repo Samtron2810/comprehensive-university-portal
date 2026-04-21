@@ -33,6 +33,7 @@ export default function PortalLayout() {
           localStorage.setItem("level", data.level);
           localStorage.setItem("department", data.department?.name || "");
           localStorage.setItem("faculty", data.faculty?.name || "");
+          // localStorage.setItem("faculty", data.faculty || "");
           localStorage.setItem("matricNumber", data.matricNumber || "");
           localStorage.setItem("admissionType", data.admissionType || "");
           localStorage.setItem("status", data.status || "ACTIVE");

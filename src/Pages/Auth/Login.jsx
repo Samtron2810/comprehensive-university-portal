@@ -30,6 +30,8 @@ export default function LoginPage() {
   }, [navigate]);
 
   //  Handle Login Submit
+  // Inside LoginPage.jsx -> handleSubmit function
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -37,12 +39,24 @@ export default function LoginPage() {
 
     try {
       const response = await api.post("/auth/login", { email, password });
-      const { accessToken, role, id } = response.data.data;
 
+      // Extract firstName, lastName, and level along with the tokens
+      const { accessToken, role, id, firstName, lastName, level } =
+        response.data.data;
+
+      // Save all necessary details to localStorage
       localStorage.setItem("token", accessToken);
       localStorage.setItem("role", role);
       localStorage.setItem("userId", id);
+      localStorage.setItem("firstName", firstName || "");
+      localStorage.setItem("lastName", lastName || "");
 
+      // Level might only exist for students, so we handle it safely
+      if (level) {
+        localStorage.setItem("level", level);
+      }
+
+      // Navigation logic remains the same...
       if (role === "STUDENT") {
         navigate("/user-portal/student-dashboard", { replace: true });
       } else if (role === "ADMIN") {

@@ -118,7 +118,7 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-6">
       {/*  Welcome Banner  */}
-      <div className="bg-blue-900 rounded-2xl px-8 py-7 flex items-center justify-between gap-6">
+      <div className="bg-blue-900 rounded-2xl px-6 py-6 flex items-center justify-between gap-6">
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shrink-0 border-4 border-blue-700">
             <FaUserCircle className="text-blue-900 text-4xl" />
@@ -160,19 +160,20 @@ export default function Dashboard() {
             Student Information
           </p>
         </div>
-        <div className="grid grid-flow-col auto-cols-max gap-2">
+        {/* <div className="grid grid-flow-col auto-cols-max gap-2"> */}
+        <div className="flex flex-wrap">
           {DETAILS.map(({ icon: Icon, label, value }) => (
             <div
               key={label}
-              className="flex flex-col gap-2 px-5 py-4 border-r-2 border-r-blue-300  hover:bg-blue-50 transition-colors duration-200 group"
+              className="flex flex-col  flex-[1_0_250px] gap-2 px-5 py-4 border-r-2 border-r-white  hover:bg-blue-50 transition-colors duration-200 group"
             >
               <div className="flex items-center gap-2">
                 <Icon className="text-blue-900 text-xs group-hover:text-blue-700" />
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+                <p className="w-full break-all text-xs font-bold text-gray-400 uppercase tracking-wide">
                   {label}
                 </p>
               </div>
-              <p className="text-sm font-black text-gray-800 leading-snug">
+              <p className="w-full break-all text-sm font-black text-gray-800 leading-snug">
                 {value}
               </p>
             </div>

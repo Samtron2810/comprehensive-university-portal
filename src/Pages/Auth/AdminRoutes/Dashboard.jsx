@@ -2,63 +2,79 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   FaUserCircle,
-  FaBookOpen,
+  FaUsers,
+  FaChalkboardTeacher,
+  FaClipboardCheck,
+  FaBook,
   FaArrowRight,
-  FaCalendarAlt,
-  FaClock,
   FaSpinner,
+  FaCheckCircle,
 } from "react-icons/fa";
 import api from "../../../api/axiosInstance";
 
 export default function AdminDashboard() {
-  const [courses, setCourses] = useState([]);
+  const [stats, setStats] = useState({
+    activeStudentsCount: 0,
+    lecturerCount: 0,
+    courseCount: 0,
+    pendingRegistrationsCount: 0,
+  });
+  const [pendingApprovals, setPendingApprovals] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 1. Get Student Info from localStorage (Saved by PortalLayout)
   const firstName = localStorage.getItem("firstName") || "Admin";
-  const lastName = localStorage.getItem("lastName") || "";
-  const level = localStorage.getItem("level") || "N/A";
-  const role = localStorage.getItem("role") || "N/A";
-  const studentId = localStorage.getItem("studentId");
+  const role = localStorage.getItem("role") || "ADMIN";
 
-  const STUDENT = {
-    name: `${firstName} ${lastName}`,
-    role: role,
-    avatar: null,
-  };
-
-  // 2. Fetch Real Registration Stats
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchAdminData = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/registrations/student/${studentId}`);
-        const registrations = response.data.data;
+        // 1. Fetch Admin Statistics
+        const statsRes = await api.get("/admin/stats");
+        if (statsRes.data.data) {
+          setStats(statsRes.data.data);
+        }
 
-        // Find the submitted registration for the current semester
-        const activeReg =
-          registrations.find((reg) => reg.isSubmitted) || registrations[0];
-
-        if (activeReg && activeReg.courses) {
-          setCourses(activeReg.courses);
+        // 2. Fetch Pending Registrations (Limited to 5 for dashboard preview)
+        const pendingRes = await api.get("/registrations?status=SUBMITTED");
+        if (pendingRes.data.data) {
+          setPendingApprovals(pendingRes.data.data.slice(0, 5));
         }
       } catch (err) {
-        console.error("Dashboard fetch error:", err);
+        console.error("Admin Dashboard fetch error:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    if (studentId) fetchDashboardData();
-  }, [studentId]);
+    fetchAdminData();
+  }, []);
 
-  const totalUnits = courses.reduce((sum, c) => sum + (c.units || 0), 0);
-
-  const STATS = [
-    { label: "Registered Courses", value: courses.length },
-    { label: "Credit Units", value: totalUnits },
-    { label: "Current GPA", value: "0.00" }, // Link this to Results API later
-    { label: "Semester", value: "1st" },
+  const STATS_CARDS = [
+    {
+      label: "Total Students",
+      value: stats.activeStudentsCount,
+      icon: FaUsers,
+      color: "text-blue-600",
+    },
+    {
+      label: "Total Lecturers",
+      value: stats.lecturerCount,
+      icon: FaChalkboardTeacher,
+      color: "text-purple-600",
+    },
+    {
+      label: "Total Courses",
+      value: stats.courseCount,
+      icon: FaBook,
+      color: "text-green-600",
+    },
+    {
+      label: "Pending Approvals",
+      value: stats.pendingRegistrationsCount,
+      icon: FaClipboardCheck,
+      color: "text-orange-600",
+    },
   ];
 
   const today = new Date().toLocaleDateString("en-US", {
@@ -79,52 +95,44 @@ export default function AdminDashboard() {
   return (
     <div className="flex flex-col gap-6">
       {/* Welcome Banner */}
-      <div className="bg-blue-900 rounded-2xl px-8 py-7 flex items-center justify-between gap-6">
+      <div className="bg-blue-600 rounded-2xl px-8 py-7 flex items-center justify-between gap-6 shadow-lg">
         <div className="flex items-center gap-5">
-          {STUDENT.avatar ? (
-            <img
-              src={STUDENT.avatar}
-              alt={STUDENT.name}
-              className="w-16 h-16 rounded-full object-cover border-4 border-white shrink-0"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shrink-0 border-4 border-blue-700">
-              <FaUserCircle className="text-blue-900 text-4xl" />
-            </div>
-          )}
+          <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shrink-0 border-4 border-blue-700">
+            <FaUserCircle className="text-blue-900 text-4xl" />
+          </div>
 
           <div>
             <p className="text-blue-300 text-xs font-semibold uppercase tracking-widest mb-1">
               {today}
             </p>
             <h1 className="text-white text-2xl font-black leading-snug">
-              Welcome back, {firstName}!
+              {firstName} Overview
             </h1>
             <p className="text-blue-200 text-sm mt-1">
-              {STUDENT.department} &mdash; {STUDENT.level} &mdash;{" "}
-              {STUDENT.session}
+              {role} Account &mdash;{">"} University Management Portal
             </p>
           </div>
         </div>
 
         <div className="hidden md:flex flex-col items-end gap-1 shrink-0">
-          <span className="bg-yellow-400 text-blue-900 text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
-            {STUDENT.semester}
+          <span className="bg-green-500 text-white text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
+            Active
           </span>
-          <span className="text-blue-300 text-xs">
-            {STUDENT.session} Session
-          </span>
+          <span className="text-blue-300 text-xs">Admin</span>
         </div>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {STATS.map(({ label, value }) => (
+        {STATS_CARDS.map(({ label, value, icon: Icon, color }) => (
           <div
             key={label}
             className="bg-white border border-gray-200 rounded-xl px-5 py-5 flex flex-col gap-1 hover:border-blue-900 hover:shadow-md transition-all duration-200"
           >
-            <p className="text-2xl font-black text-blue-900">{value}</p>
+            <div className="flex justify-between items-start">
+              <p className="text-2xl font-black text-blue-900">{value}</p>
+              <Icon className={`${color} text-lg opacity-80`} />
+            </div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide leading-snug">
               {label}
             </p>
@@ -132,58 +140,60 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Enrolled Courses */}
+      {/* Pending Approvals Section */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <FaBookOpen className="text-blue-900 text-base" />
+            <FaClipboardCheck className="text-blue-900 text-base" />
             <p className="text-sm font-black text-gray-800 uppercase tracking-wide">
-              Enrolled Courses
+              Recent Course Registrations
             </p>
           </div>
           <Link
-            to="/student-portal/courses"
+            to="/user-portal/admin-registrations"
             className="flex items-center gap-1 text-xs font-bold text-blue-900 hover:underline"
           >
-            See all <FaArrowRight className="text-xs" />
+            Manage All <FaArrowRight className="text-xs" />
           </Link>
         </div>
 
         <div className="divide-y divide-gray-100">
-          {courses.length > 0 ? (
-            courses.map((course) => (
+          {pendingApprovals.length > 0 ? (
+            pendingApprovals.map((reg) => (
               <div
-                key={course._id || course.code}
+                key={reg._id}
                 className="flex items-center justify-between px-6 py-4 hover:bg-blue-50 group transition-colors duration-200"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-blue-100 group-hover:bg-blue-900 flex items-center justify-center shrink-0 transition-colors duration-200">
-                    <FaBookOpen className="text-blue-900 group-hover:text-white text-xs transition-colors duration-200" />
+                    <FaUserCircle className="text-blue-900 group-hover:text-white text-xs transition-colors duration-200" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-gray-800 group-hover:text-blue-900 transition-colors">
-                      {course.title}
+                    <p className="text-sm font-black text-gray-800 group-hover:text-blue-900 transition-colors capitalize">
+                      {reg.student?.firstName} {reg.student?.lastName}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {course.code} &bull; {course.units} Units
+                      Level: {reg.level} &bull; {reg.courses?.length} Courses
                     </p>
                   </div>
                 </div>
 
                 <div className="hidden sm:flex flex-col items-end gap-1 shrink-0 text-right">
-                  <span className="flex items-center gap-1 text-xs uppercase font-bold text-blue-900">
-                    Active
+                  <span className="flex items-center gap-1 text-xs uppercase font-bold text-orange-600">
+                    Pending Review
                   </span>
-                  <span className="flex items-center gap-1 text-xs text-gray-500">
-                    <FaCalendarAlt className="text-gray-300 text-xs" />
-                    {STUDENT.session}
+                  <span className="text-[10px] text-gray-400 font-medium">
+                    ID: {reg._id.slice(-6).toUpperCase()}
                   </span>
                 </div>
               </div>
             ))
           ) : (
-            <div className="px-6 py-10 text-center text-gray-500 text-sm">
-              No courses registered yet.
+            <div className="px-6 py-12 text-center flex flex-col items-center gap-3">
+              <FaCheckCircle className="text-gray-200 text-4xl" />
+              <p className="text-gray-500 text-sm">
+                All course registrations have been processed.
+              </p>
             </div>
           )}
         </div>

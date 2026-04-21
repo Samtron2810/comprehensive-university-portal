@@ -28,6 +28,11 @@ import StudentSchedule from "./Pages/Auth/StudentRoutes/Schedule";
 
 // Admin Child Routes
 import AdminDashboard from "./Pages/Auth/AdminRoutes/Dashboard";
+import AdminStudents from "./Pages/Auth/AdminRoutes/Students";
+import AdminLecturers from "./Pages/Auth/AdminRoutes/Lecturers";
+import AdminCourses from "./Pages/Auth/AdminRoutes/Courses";
+import AdminApprovals from "./Pages/Auth/AdminRoutes/Approvals";
+import AdminSessions from "./Pages/Auth/AdminRoutes/Sessions";
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
@@ -82,6 +87,11 @@ const Layout = () => {
 
           {/* For Admins */}
           <Route path="admin-dashboard" element={<AdminDashboard />} />
+          <Route path="admin-students" element={<AdminStudents />} />
+          <Route path="admin-lecturers" element={<AdminLecturers />} />
+          <Route path="admin-courses" element={<AdminCourses />} />
+          <Route path="admin-approvals" element={<AdminApprovals />} />
+          <Route path="admin-sessions" element={<AdminSessions />} />
         </Route>
       </Routes>
 
