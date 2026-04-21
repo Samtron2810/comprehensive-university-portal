@@ -3,9 +3,10 @@ import {
   Route,
   Routes,
   useLocation,
+  Navigate,
 } from "react-router-dom";
 import MainTopBar from "./Components/MainTopBar";
-// import UserTopBar from "./Components/UserTopBar"; //comment this usertopbar fornow
+// import UserTopBar from "./Components/UserTopBar";
 import Footer from "./Components/Footer";
 import HomePage from "./Pages/MainPages/Home";
 import About from "./Pages/MainPages/About";
@@ -34,6 +35,27 @@ import AdminCourses from "./Pages/Auth/AdminRoutes/Courses";
 import AdminApprovals from "./Pages/Auth/AdminRoutes/Approvals";
 import AdminSessions from "./Pages/Auth/AdminRoutes/Sessions";
 
+// ─── Protected Route Helper ──────────────────────────────────────────────────
+
+const ProtectedRoute = ({ children, allowedRole }) => {
+  const role = localStorage.getItem("role");
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRole && role !== allowedRole) {
+    const fallback =
+      role === "ADMIN"
+        ? "/user-portal/admin-dashboard"
+        : "/user-portal/student-dashboard";
+    return <Navigate to={fallback} replace />;
+  }
+
+  return children;
+};
+
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
 const Layout = () => {
@@ -42,10 +64,7 @@ const Layout = () => {
   const isAuthPage =
     location.pathname === "/login" || location.pathname === "/register";
 
-  const isPortalPage =
-    location.pathname.startsWith("/user-portal") ||
-    location.pathname.startsWith("/admin") ||
-    location.pathname.startsWith("/lecturer");
+  const isPortalPage = location.pathname.startsWith("/user-portal");
 
   const isMainPage = !isAuthPage && !isPortalPage;
 
@@ -55,7 +74,6 @@ const Layout = () => {
       {isMainPage && <MainTopBar />}
 
       {/* Portal top bar — inside any portal */}
-      {/* comment this for now */}
       {/* {isPortalPage && <UserTopBar />} */}
 
       <Routes>
@@ -73,25 +91,120 @@ const Layout = () => {
         {/* ── User Portal Routes ── */}
         <Route path="/user-portal" element={<UserPortal />}>
           {/* For students */}
-          <Route path="student-dashboard" element={<StudentDashboard />} />
-          <Route path="student-payment" element={<StudentPayment />} />
+          <Route
+            path="student-dashboard"
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="student-payment"
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <StudentPayment />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="student-registration"
-            element={<StudentRegistration />}
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <StudentRegistration />
+              </ProtectedRoute>
+            }
           />
-          <Route path="student-courses" element={<StudentCourses />} />
-          <Route path="student-drop" element={<StudentDrop />} />
-          <Route path="student-result" element={<StudentResult />} />
-          <Route path="student-notice" element={<StudentNotice />} />
-          <Route path="student-schedule" element={<StudentSchedule />} />
+          <Route
+            path="student-courses"
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <StudentCourses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="student-drop"
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <StudentDrop />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="student-result"
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <StudentResult />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="student-notice"
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <StudentNotice />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="student-schedule"
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <StudentSchedule />
+              </ProtectedRoute>
+            }
+          />
 
           {/* For Admins */}
-          <Route path="admin-dashboard" element={<AdminDashboard />} />
-          <Route path="admin-students" element={<AdminStudents />} />
-          <Route path="admin-lecturers" element={<AdminLecturers />} />
-          <Route path="admin-courses" element={<AdminCourses />} />
-          <Route path="admin-approvals" element={<AdminApprovals />} />
-          <Route path="admin-sessions" element={<AdminSessions />} />
+          <Route
+            path="admin-dashboard"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admin-students"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminStudents />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admin-lecturers"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminLecturers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admin-courses"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminCourses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admin-approvals"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminApprovals />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admin-sessions"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminSessions />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Routes>
 
