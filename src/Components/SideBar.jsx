@@ -40,17 +40,26 @@ const NAV_CONFIG = {
       to: "/user-portal/student-registration",
     },
     { icon: FaBookOpen, label: "Courses", to: "/user-portal/student-courses" },
+
+    { icon: FaPollH, label: "Result", to: "/user-portal/student-result" },
     {
       icon: FaCalendarMinus,
       label: "Drop Semester",
       to: "/user-portal/student-drop",
+      disabled: true,
     },
-    { icon: FaPollH, label: "Result", to: "/user-portal/student-result" },
-    { icon: FaBell, label: "Notice", to: "/user-portal/student-notice" },
+
+    {
+      icon: FaBell,
+      label: "Notice",
+      to: "/user-portal/student-notice",
+      disabled: true,
+    },
     {
       icon: FaCalendarAlt,
       label: "Schedule",
       to: "/user-portal/student-schedule",
+      disabled: true,
     },
   ],
   ADMIN: [
@@ -134,35 +143,38 @@ export default function Sidebar() {
 
       {/* ── Nav Links ── */}
       <nav className="flex-1 py-4 flex flex-col gap-1 px-2 overflow-y-auto">
-        {navItems.map(({ icon: Icon, label, to }) => (
+        {navItems.map(({ icon: Icon, label, to, disabled }) => (
           <NavLink
             key={to}
-            to={to}
+            to={disabled ? "#" : to}
+            onClick={(e) => {
+              if (disabled) e.preventDefault();
+            }}
             title={!expanded ? label : ""}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-semibold transition-all duration-200 group ${
                 expanded ? "" : "justify-center"
               } ${
-                isActive
-                  ? "bg-white text-blue-900"
-                  : "text-blue-200 hover:bg-blue-800 hover:text-white"
+                disabled
+                  ? "opacity-50 cursor-not-allowed pointer-events-none"
+                  : isActive
+                    ? "bg-white text-blue-900"
+                    : "text-blue-200 hover:bg-blue-800 hover:text-white"
               }`
             }
           >
             {({ isActive }) => (
               <>
                 <Icon
-                  className={`text-base shrink-0 transition-colors duration-200 ${
-                    isActive
-                      ? "text-blue-900"
-                      : "text-blue-300 group-hover:text-white"
+                  className={`text-base shrink-0 ${
+                    disabled
+                      ? "text-blue-400"
+                      : isActive
+                        ? "text-blue-900"
+                        : "text-blue-300 group-hover:text-white"
                   }`}
                 />
-                {expanded && (
-                  <span className="whitespace-nowrap overflow-hidden">
-                    {label}
-                  </span>
-                )}
+                {expanded && <span>{label}</span>}
               </>
             )}
           </NavLink>
