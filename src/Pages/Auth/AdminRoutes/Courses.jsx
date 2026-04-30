@@ -16,7 +16,11 @@ export default function AdminCourses() {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Form State — semester removed (backend auto-derives from course code)
+  // EDIT MODE
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
+
+  // Form State
   const [formData, setFormData] = useState({
     title: "",
     code: "",
@@ -27,10 +31,11 @@ export default function AdminCourses() {
     fetchCourses();
   }, []);
 
+  // ✅ FIXED ENDPOINT
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/admin/courses");
+      const res = await api.get("/courses");
       setCourses(res.data.data || []);
     } catch (err) {
       console.error(err);
@@ -39,13 +44,48 @@ export default function AdminCourses() {
     }
   };
 
+  // RESET FORM
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      code: "",
+      creditUnits: "",
+    });
+    setIsEditing(false);
+    setSelectedCourseId(null);
+  };
+
+  // OPEN ADD MODAL
+  const openAddModal = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
+  // OPEN EDIT MODAL
+  const handleEdit = (course) => {
+    setFormData({
+      title: course.title,
+      code: course.code,
+      creditUnits: course.creditUnits,
+    });
+    setSelectedCourseId(course._id);
+    setIsEditing(true);
+    setShowModal(true);
+  };
+
+  // ADD COURSE
   const handleAddCourse = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+
     try {
-      await api.post("/courses", formData);
+      await api.post("/courses", {
+        ...formData,
+        creditUnits: Number(formData.creditUnits),
+      });
+
       setShowModal(false);
-      setFormData({ title: "", code: "", creditUnits: "" });
+      resetForm();
       fetchCourses();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to add course");
@@ -54,18 +94,42 @@ export default function AdminCourses() {
     }
   };
 
+  // UPDATE COURSE
+  const handleUpdateCourse = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      await api.patch(`/courses/${selectedCourseId}`, {
+        ...formData,
+        creditUnits: Number(formData.creditUnits),
+      });
+
+      setShowModal(false);
+      resetForm();
+      fetchCourses();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to update course");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // SAFE FILTER
   const filteredCourses = courses.filter(
     (c) =>
-      c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.code.toLowerCase().includes(searchTerm.toLowerCase()),
+      (c.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.code || "").toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
     <div className="flex flex-col gap-6">
+      {/* HEADER */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-black text-blue-900 uppercase">
           Course Catalog
         </h2>
+
         <div className="flex gap-3">
           <div className="relative">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
@@ -76,8 +140,9 @@ export default function AdminCourses() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openAddModal}
             className="bg-blue-900 text-white px-4 py-2 rounded-lg text-xs font-black flex items-center gap-2 hover:bg-blue-800 transition-all"
           >
             <FaPlus /> ADD COURSE
@@ -85,6 +150,7 @@ export default function AdminCourses() {
         </div>
       </div>
 
+      {/* TABLE */}
       <div className="bg-white border rounded-2xl overflow-hidden shadow-sm">
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b">
@@ -103,6 +169,7 @@ export default function AdminCourses() {
               </th>
             </tr>
           </thead>
+
           <tbody className="divide-y">
             {loading ? (
               <tr>
@@ -133,14 +200,20 @@ export default function AdminCourses() {
                       {course.code}
                     </p>
                   </td>
+
                   <td className="px-6 py-4 text-sm text-gray-500 text-center font-bold">
                     {course.creditUnits}
                   </td>
+
                   <td className="px-6 py-4 text-sm text-gray-500 text-center">
                     {course.semester ?? "—"}
                   </td>
+
                   <td className="px-6 py-4 text-right">
-                    <button className="text-blue-900 hover:bg-blue-100 p-2 rounded-lg transition-colors">
+                    <button
+                      onClick={() => handleEdit(course)}
+                      className="text-blue-900 hover:bg-blue-100 p-2 rounded-lg transition-colors"
+                    >
                       <FaEdit />
                     </button>
                   </td>
@@ -151,21 +224,24 @@ export default function AdminCourses() {
         </table>
       </div>
 
-      {/* --- ADD COURSE MODAL --- */}
+      {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-blue-950/60 backdrop-blur-sm"
             onClick={() => setShowModal(false)}
           />
+
           <form
-            onSubmit={handleAddCourse}
-            className="relative bg-white w-full max-w-md rounded-2xl p-8 shadow-2xl animate-in fade-in zoom-in duration-200"
+            onSubmit={isEditing ? handleUpdateCourse : handleAddCourse}
+            className="relative bg-white w-full max-w-md rounded-2xl p-8 shadow-2xl"
           >
+            {/* HEADER */}
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-black text-blue-900 uppercase">
-                Create New Course
+                {isEditing ? "Update Course" : "Create Course"}
               </h3>
+
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
@@ -175,66 +251,62 @@ export default function AdminCourses() {
               </button>
             </div>
 
+            {/* FORM */}
             <div className="space-y-4">
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                  Course Title
-                </label>
+              <input
+                required
+                type="text"
+                placeholder="Course Title"
+                className="w-full border p-3 rounded-lg text-sm bg-gray-50"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+              />
+
+              <div className="grid grid-cols-2 gap-4">
                 <input
                   required
                   type="text"
-                  className="w-full border p-3 rounded-lg text-sm outline-none focus:border-blue-900 bg-gray-50"
-                  placeholder="e.g. Introduction to Programming"
-                  value={formData.title}
+                  placeholder="Course Code"
+                  className="w-full border p-3 rounded-lg text-sm bg-gray-50"
+                  value={formData.code}
                   onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
+                    setFormData({ ...formData, code: e.target.value })
+                  }
+                />
+
+                <input
+                  required
+                  type="number"
+                  placeholder="Credit Units"
+                  className="w-full border p-3 rounded-lg text-sm bg-gray-50"
+                  value={formData.creditUnits}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      creditUnits: e.target.value,
+                    })
                   }
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                    Course Code
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    className="w-full border p-3 rounded-lg text-sm outline-none focus:border-blue-900 bg-gray-50"
-                    placeholder="CSC 101"
-                    value={formData.code}
-                    onChange={(e) =>
-                      setFormData({ ...formData, code: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                    Credit Units
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    className="w-full border p-3 rounded-lg text-sm outline-none focus:border-blue-900 bg-gray-50"
-                    placeholder="3"
-                    value={formData.creditUnits}
-                    onChange={(e) =>
-                      setFormData({ ...formData, creditUnits: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-              <p className="text-[10px] text-gray-400 leading-relaxed">
-                ℹ️ Semester and level are automatically derived by the backend
-                from the course code.
+
+              <p className="text-[10px] text-gray-400">
+                Semester is automatically derived from course code.
               </p>
             </div>
 
+            {/* BUTTON */}
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-blue-900 text-white font-black text-xs py-4 rounded-lg mt-8 hover:bg-blue-800 transition-colors uppercase tracking-widest disabled:opacity-50"
+              className="w-full bg-blue-900 text-white font-black text-xs py-4 rounded-lg mt-8 hover:bg-blue-800 uppercase"
             >
-              {submitting ? "Processing..." : "Create Course"}
+              {submitting
+                ? "Processing..."
+                : isEditing
+                  ? "Update Course"
+                  : "Create Course"}
             </button>
           </form>
         </div>

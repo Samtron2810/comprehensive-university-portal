@@ -81,6 +81,7 @@ const NAV_CONFIG = {
       to: "/user-portal/admin-approvals",
     },
     { icon: FaHistory, label: "Sessions", to: "/user-portal/admin-sessions" },
+    { icon: FaHistory, label: "Semesters", to: "/user-portal/admin-semesters" },
   ],
   LECTURER: [
     {

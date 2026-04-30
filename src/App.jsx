@@ -34,6 +34,7 @@ import AdminLecturers from "./Pages/Auth/AdminRoutes/Lecturers";
 import AdminCourses from "./Pages/Auth/AdminRoutes/Courses";
 import AdminApprovals from "./Pages/Auth/AdminRoutes/Approvals";
 import AdminSessions from "./Pages/Auth/AdminRoutes/Sessions";
+import AdminSemesters from "./Pages/Auth/AdminRoutes/Semesters";
 
 // ─── Protected Route Helper ──────────────────────────────────────────────────
 
@@ -202,6 +203,14 @@ const Layout = () => {
             element={
               <ProtectedRoute allowedRole="ADMIN">
                 <AdminSessions />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admin-semesters"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminSemesters />
               </ProtectedRoute>
             }
           />
