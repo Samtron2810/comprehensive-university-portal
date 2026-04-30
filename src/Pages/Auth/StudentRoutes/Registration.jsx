@@ -15,24 +15,33 @@ const MAX_UNITS = 24;
 export default function RegistrationPage() {
   const [eligibleCourses, setEligibleCourses] = useState([]);
   const [registrationId, setRegistrationId] = useState(null);
-  const [registeredCourses, setRegisteredCourses] = useState([]); // [{course: {...}, creditUnits, isCarryOver}]
-  const [regStatus, setRegStatus] = useState(null); // DRAFT, SUBMITTED, APPROVED, REJECTED
+  const [registeredCourses, setRegisteredCourses] = useState([]);
+  const [regStatus, setRegStatus] = useState(null);
   const [feesPaid, setFeesPaid] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(null); // courseId being actioned
+  const [actionLoading, setActionLoading] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-
-  const studentId =
-    localStorage.getItem("studentId") || localStorage.getItem("userId");
 
   // ── Step 1: On mount — check current registration + fetch eligible courses ──
   useEffect(() => {
     const init = async () => {
+      // Read studentId inside the effect so it's always fresh from localStorage
+      const studentId =
+        localStorage.getItem("studentId") || localStorage.getItem("userId");
+
+      if (!studentId) {
+        setMessage({
+          type: "error",
+          text: "Student profile not loaded yet. Please refresh the page.",
+        });
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
 
-        // Run both requests in parallel
         const [currentRegRes, eligibleRes] = await Promise.allSettled([
           api.get("/registrations/current"),
           api.get(`/courses/eligible/${studentId}`),
@@ -41,6 +50,12 @@ export default function RegistrationPage() {
         // Handle eligible courses
         if (eligibleRes.status === "fulfilled") {
           setEligibleCourses(eligibleRes.value.data.data || []);
+        } else {
+          console.error(
+            "Eligible courses fetch failed:",
+            eligibleRes.reason?.response?.status,
+            eligibleRes.reason?.message,
+          );
         }
 
         // Handle current registration
@@ -53,7 +68,12 @@ export default function RegistrationPage() {
             setFeesPaid(reg.feesPaid || false);
           }
         } else {
-          // No current registration — we'll create a draft when needed
+          console.error(
+            "Current registration fetch failed:",
+            currentRegRes.reason?.response?.status,
+            currentRegRes.reason?.message,
+          );
+          // No current registration — draft will be created on first Add click
           setRegistrationId(null);
         }
       } catch (err) {
@@ -67,8 +87,8 @@ export default function RegistrationPage() {
       }
     };
 
-    if (studentId) init();
-  }, [studentId]);
+    init();
+  }, []); // empty deps — studentId is read fresh inside the effect
 
   // ── Helper: get or create a draft registration ────────────────────────────
   const getOrCreateDraft = async () => {
@@ -101,12 +121,12 @@ export default function RegistrationPage() {
         courseId: course._id,
       });
 
-      // Update local state immediately
       setRegisteredCourses((prev) => [
         ...prev,
         { course, creditUnits: course.creditUnits, isCarryOver: false },
       ]);
     } catch (err) {
+      console.error("Add course error:", err.response?.status, err.message);
       setMessage({
         type: "error",
         text: err.response?.data?.message || "Failed to add course.",
@@ -124,11 +144,11 @@ export default function RegistrationPage() {
 
       await api.delete(`/registrations/${registrationId}/courses/${courseId}`);
 
-      // Update local state immediately
       setRegisteredCourses((prev) =>
         prev.filter((item) => item.course._id !== courseId),
       );
     } catch (err) {
+      console.error("Remove course error:", err.response?.status, err.message);
       setMessage({
         type: "error",
         text: err.response?.data?.message || "Failed to remove course.",
@@ -167,6 +187,7 @@ export default function RegistrationPage() {
         text: "Registration submitted successfully! Awaiting approval.",
       });
     } catch (err) {
+      console.error("Submit error:", err.response?.status, err.message);
       setMessage({
         type: "error",
         text:
@@ -188,7 +209,6 @@ export default function RegistrationPage() {
   const unitPercent = Math.min((totalUnits / MAX_UNITS) * 100, 100);
   const isLocked = regStatus === "SUBMITTED" || regStatus === "APPROVED";
 
-  // ── Status badge ──────────────────────────────────────────────────────────
   const STATUS_STYLES = {
     DRAFT: "bg-yellow-100 text-yellow-800",
     SUBMITTED: "bg-blue-100 text-blue-800",
@@ -196,7 +216,6 @@ export default function RegistrationPage() {
     REJECTED: "bg-red-100 text-red-800",
   };
 
-  // ── Loading state ─────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-blue-900">
@@ -222,7 +241,6 @@ export default function RegistrationPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Registration Status Badge */}
           {regStatus && (
             <span
               className={`text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full ${STATUS_STYLES[regStatus] || "bg-gray-100 text-gray-600"}`}
@@ -231,7 +249,6 @@ export default function RegistrationPage() {
             </span>
           )}
 
-          {/* Submit Button */}
           {!isLocked && (
             <button
               onClick={handleSubmit}
@@ -265,7 +282,7 @@ export default function RegistrationPage() {
       )}
 
       {/* ── Fees Warning ── */}
-      {!feesPaid && (
+      {!feesPaid && !isLocked && (
         <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-300 rounded-xl px-5 py-4">
           <FaExclamationTriangle className="text-yellow-500 text-lg shrink-0 mt-0.5" />
           <p className="text-sm text-yellow-800 font-semibold">

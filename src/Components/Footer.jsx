@@ -45,12 +45,13 @@ export default function Footer() {
             Contact
           </p>
           <p className="text-sm text-gray-300">
-            <span className="font-semibold text-white">Phone: </span>(303)
-            631-9860
+            <span className="font-semibold text-white">Phone: </span>
+            +2348056397589
           </p>
           <p className="text-sm text-gray-300">
             <span className="font-semibold text-white">Email: </span>
-            info@comprehensive.edu
+            {/* info@comprehensive.edu */}
+            danielsamuel730@gmail.com
           </p>
           <p className="text-sm text-gray-300">
             <span className="font-semibold text-white">Address: </span>

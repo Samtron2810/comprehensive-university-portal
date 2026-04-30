@@ -10,8 +10,6 @@ import {
   FaInbox,
 } from "react-icons/fa";
 
-// ─── Status Meta ──────────────────────────────────────────────────────────────
-
 const STATUS_META = {
   APPROVED: {
     label: "Approved",
@@ -35,8 +33,6 @@ const STATUS_META = {
   },
 };
 
-// ─── Summary Card ─────────────────────────────────────────────────────────────
-
 function SummaryCard({ label, value, color, extra }) {
   const colors = {
     blue: "bg-blue-50   text-blue-700   border-blue-200",
@@ -56,8 +52,6 @@ function SummaryCard({ label, value, color, extra }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default function Courses() {
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +62,6 @@ export default function Courses() {
   const lastName = localStorage.getItem("lastName") || "";
   const level = localStorage.getItem("level") || "";
 
-  // ── Fetch Registrations ───────────────────────────────────────────────────
   useEffect(() => {
     const fetchRegistrations = async () => {
       try {
@@ -77,11 +70,9 @@ export default function Courses() {
 
         const res = await api.get("/registrations/my-registrations");
 
-        // Backend always returns response.data.data
         const list = Array.isArray(res.data.data) ? res.data.data : [];
         setRegistrations(list);
 
-        // Auto-expand the most recent approved or submitted registration
         const best =
           list.find(
             (r) => r.status === "APPROVED" || r.status === "SUBMITTED",
@@ -89,7 +80,11 @@ export default function Courses() {
 
         if (best) setActiveRegId(best._id);
       } catch (err) {
-        console.error("Courses fetch error:", err.message);
+        console.error(
+          "Courses fetch error:",
+          err.response?.status,
+          err.message,
+        );
         setError("Failed to load your registered courses. Please try again.");
       } finally {
         setLoading(false);
@@ -99,20 +94,17 @@ export default function Courses() {
     fetchRegistrations();
   }, []);
 
-  // ── Derived Values ────────────────────────────────────────────────────────
   const activeReg = registrations.find((r) => r._id === activeRegId) ?? null;
   const courses = activeReg?.courses ?? [];
   const statusMeta = activeReg
     ? (STATUS_META[activeReg.status] ?? STATUS_META.DRAFT)
     : null;
 
-  // creditUnits lives on the outer item, course details are nested in item.course
   const totalUnits = courses.reduce(
     (sum, item) => sum + (item.creditUnits ?? 0),
     0,
   );
 
-  // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 text-blue-900 gap-3">
@@ -122,7 +114,6 @@ export default function Courses() {
     );
   }
 
-  // ── Error ─────────────────────────────────────────────────────────────────
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 text-red-600">
@@ -138,7 +129,6 @@ export default function Courses() {
     );
   }
 
-  // ── Empty ─────────────────────────────────────────────────────────────────
   if (registrations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400">
@@ -160,7 +150,6 @@ export default function Courses() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* ── Page Header ── */}
       <div className="flex items-center gap-3">
         <div className="bg-blue-100 text-blue-900 p-3 rounded-xl">
           <FaBookOpen className="text-xl" />
@@ -174,7 +163,6 @@ export default function Courses() {
         </div>
       </div>
 
-      {/* ── Registration Tabs (only shown if more than one registration) ── */}
       {registrations.length > 1 && (
         <div className="flex flex-wrap gap-2">
           {registrations.map((reg) => {
@@ -204,7 +192,6 @@ export default function Courses() {
         </div>
       )}
 
-      {/* ── Summary Cards ── */}
       {activeReg && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <SummaryCard
@@ -236,7 +223,6 @@ export default function Courses() {
         </div>
       )}
 
-      {/* ── Courses Table ── */}
       {courses.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center text-gray-400">
           <FaInbox className="text-4xl mx-auto mb-3" />
@@ -267,7 +253,6 @@ export default function Courses() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {courses.map((item, idx) => {
-                  // API shape: { course: { _id, code, title, creditUnits, type }, creditUnits, isCarryOver }
                   const courseData = item.course ?? item;
 
                   return (

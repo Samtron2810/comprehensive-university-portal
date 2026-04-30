@@ -88,6 +88,15 @@ export default function AdminStudents() {
                   <FaSpinner className="animate-spin inline text-blue-900" />
                 </td>
               </tr>
+            ) : filteredStudents.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="4"
+                  className="py-10 text-center text-sm text-gray-400"
+                >
+                  No students found.
+                </td>
+              </tr>
             ) : (
               filteredStudents.map((student) => (
                 <tr

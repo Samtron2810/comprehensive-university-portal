@@ -16,12 +16,11 @@ export default function AdminCourses() {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Form State
+  // Form State — semester removed (backend auto-derives from course code)
   const [formData, setFormData] = useState({
     title: "",
     code: "",
-    units: "",
-    semester: "1", // Default to 1st
+    creditUnits: "",
   });
 
   useEffect(() => {
@@ -46,8 +45,8 @@ export default function AdminCourses() {
     try {
       await api.post("/courses", formData);
       setShowModal(false);
-      setFormData({ title: "", code: "", units: "", semester: "1" });
-      fetchCourses(); // Refresh list
+      setFormData({ title: "", code: "", creditUnits: "" });
+      fetchCourses();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to add course");
     } finally {
@@ -94,7 +93,7 @@ export default function AdminCourses() {
                 Course Details
               </th>
               <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase text-center">
-                Units
+                Credit Units
               </th>
               <th className="px-6 py-4 text-xs font-black text-gray-500 uppercase text-center">
                 Semester
@@ -109,6 +108,15 @@ export default function AdminCourses() {
               <tr>
                 <td colSpan="4" className="py-10 text-center">
                   <FaSpinner className="animate-spin inline text-blue-900" />
+                </td>
+              </tr>
+            ) : filteredCourses.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="4"
+                  className="py-10 text-center text-sm text-gray-400"
+                >
+                  No courses found.
                 </td>
               </tr>
             ) : (
@@ -126,10 +134,10 @@ export default function AdminCourses() {
                     </p>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 text-center font-bold">
-                    {course.units}
+                    {course.creditUnits}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 text-center">
-                    {course.semester}
+                    {course.semester ?? "—"}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button className="text-blue-900 hover:bg-blue-100 p-2 rounded-lg transition-colors">
@@ -208,13 +216,17 @@ export default function AdminCourses() {
                     type="number"
                     className="w-full border p-3 rounded-lg text-sm outline-none focus:border-blue-900 bg-gray-50"
                     placeholder="3"
-                    value={formData.units}
+                    value={formData.creditUnits}
                     onChange={(e) =>
-                      setFormData({ ...formData, units: e.target.value })
+                      setFormData({ ...formData, creditUnits: e.target.value })
                     }
                   />
                 </div>
               </div>
+              <p className="text-[10px] text-gray-400 leading-relaxed">
+                ℹ️ Semester and level are automatically derived by the backend
+                from the course code.
+              </p>
             </div>
 
             <button
