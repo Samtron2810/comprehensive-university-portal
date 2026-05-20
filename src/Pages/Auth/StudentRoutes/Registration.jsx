@@ -23,7 +23,7 @@ export default function RegistrationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  // ── Step 1: On mount — check current registration + fetch eligible courses ──
+  //  Step 1: On mount — check current registration + fetch eligible courses
   useEffect(() => {
     const init = async () => {
       // Read studentId inside the effect so it's always fresh from localStorage
@@ -90,7 +90,7 @@ export default function RegistrationPage() {
     init();
   }, []); // empty deps — studentId is read fresh inside the effect
 
-  // ── Helper: get or create a draft registration ────────────────────────────
+  //  Helper: get or create a draft registration
   const getOrCreateDraft = async () => {
     if (registrationId) return registrationId;
 
@@ -102,7 +102,7 @@ export default function RegistrationPage() {
     return newRegId;
   };
 
-  // ── Step 4: Add a course ──────────────────────────────────────────────────
+  //  Step 4: Add a course
   const handleAdd = async (course) => {
     if (totalUnits + course.creditUnits > MAX_UNITS) {
       setMessage({
@@ -136,7 +136,7 @@ export default function RegistrationPage() {
     }
   };
 
-  // ── Step 5: Remove a course ───────────────────────────────────────────────
+  //  Step 5: Remove a course
   const handleRemove = async (courseId) => {
     try {
       setActionLoading(courseId);
@@ -158,7 +158,7 @@ export default function RegistrationPage() {
     }
   };
 
-  // ── Step 6: Submit registration ───────────────────────────────────────────
+  //  Step 6: Submit registration
   const handleSubmit = async () => {
     if (!feesPaid) {
       setMessage({
@@ -198,7 +198,7 @@ export default function RegistrationPage() {
     }
   };
 
-  // ── Computed values ───────────────────────────────────────────────────────
+  //  Computed values
   const registeredCourseIds = new Set(
     registeredCourses.map((item) => item.course._id),
   );
@@ -229,7 +229,7 @@ export default function RegistrationPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* ── Page Header ── */}
+      {/*  Page Header  */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-gray-900">
@@ -268,7 +268,7 @@ export default function RegistrationPage() {
         </div>
       </div>
 
-      {/* ── Message Banner ── */}
+      {/*  Message Banner  */}
       {message.text && (
         <div
           className={`p-4 rounded-xl text-sm font-bold border-l-4 ${
@@ -281,7 +281,7 @@ export default function RegistrationPage() {
         </div>
       )}
 
-      {/* ── Fees Warning ── */}
+      {/*  Fees Warning  */}
       {!feesPaid && !isLocked && (
         <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-300 rounded-xl px-5 py-4">
           <FaExclamationTriangle className="text-yellow-500 text-lg shrink-0 mt-0.5" />
@@ -292,7 +292,7 @@ export default function RegistrationPage() {
         </div>
       )}
 
-      {/* ── Submitted/Approved Notice ── */}
+      {/*  Submitted/Approved Notice  */}
       {isLocked && (
         <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl px-5 py-4">
           <FaCheckCircle className="text-blue-900 text-lg shrink-0 mt-0.5" />
@@ -303,7 +303,7 @@ export default function RegistrationPage() {
         </div>
       )}
 
-      {/* ── Credit Unit Indicator ── */}
+      {/*  Credit Unit Indicator  */}
       <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -342,7 +342,7 @@ export default function RegistrationPage() {
         </p>
       </div>
 
-      {/* ── Course Table ── */}
+      {/*  Course Table  */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
           <p className="text-sm font-black text-gray-800 uppercase tracking-wide">

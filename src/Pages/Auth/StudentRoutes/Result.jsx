@@ -9,7 +9,7 @@ import {
   FaFilter,
 } from "react-icons/fa";
 
-/* ── Grade → colour mapping ── */
+/*  Grade → colour mapping  */
 const GRADE_BADGE = {
   A: "bg-green-100  text-green-700",
   B: "bg-blue-100   text-blue-700",
@@ -23,7 +23,7 @@ function gradeBadge(grade) {
   return GRADE_BADGE[grade?.toUpperCase()] ?? "bg-gray-100 text-gray-600";
 }
 
-/* ── GPA colour ── */
+/*  GPA colour  */
 function gpaColor(gpa) {
   if (!gpa && gpa !== 0) return "text-gray-500";
   if (gpa >= 4.5) return "text-green-600";
@@ -33,7 +33,7 @@ function gpaColor(gpa) {
 }
 
 export default function Result() {
-  /* ─────── state ─────── */
+  /*  state  */
   const [results, setResults] = useState([]);
   const [gpaData, setGpaData] = useState(null); // { gpa, cgpa, ... }
   const [sessions, setSessions] = useState([]); // derived from results
@@ -47,7 +47,7 @@ export default function Result() {
   const lastName = localStorage.getItem("lastName") || "";
   const matric = localStorage.getItem("matricNumber") || "";
 
-  /* ─────── fetch results + GPA in parallel ─────── */
+  /*  fetch results + GPA in parallel  */
   const fetchAll = useCallback(async (session) => {
     try {
       setLoading(true);
@@ -98,7 +98,7 @@ export default function Result() {
     fetchAll(activeSession === "all" ? null : activeSession);
   }, [fetchAll, activeSession]);
 
-  /* ─────── download transcript ─────── */
+  /*  download transcript  */
   const handleDownloadTranscript = async () => {
     try {
       setDownloading(true);
@@ -124,7 +124,7 @@ export default function Result() {
     }
   };
 
-  /* ─────── derived values ─────── */
+  /*  derived values  */
   const cgpa = gpaData?.cgpa ?? gpaData?.CGPA ?? null;
   const currentGpa = gpaData?.gpa ?? gpaData?.GPA ?? null;
   const totalUnits = gpaData?.totalCreditUnits ?? gpaData?.totalUnits ?? null;
@@ -140,7 +140,7 @@ export default function Result() {
   }, {});
   const groupKeys = Object.keys(grouped);
 
-  /* ─────── loading ─────── */
+  /*  loading  */
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 text-blue-600 gap-3">
@@ -150,7 +150,7 @@ export default function Result() {
     );
   }
 
-  /* ─────── error ─────── */
+  /*  error  */
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 text-red-600">
@@ -170,7 +170,7 @@ export default function Result() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* ── Page header ── */}
+      {/*  Page header  */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="bg-blue-100 text-blue-700 p-3 rounded-xl">
@@ -199,7 +199,7 @@ export default function Result() {
         </button>
       </div>
 
-      {/* ── GPA summary cards  */}
+      {/*  GPA summary cards  */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <GpaCard label="CGPA" value={cgpa} color="blue" />
         <GpaCard label="Current GPA" value={currentGpa} color="indigo" />
@@ -217,7 +217,7 @@ export default function Result() {
         />
       </div>
 
-      {/* ── Session filter ── */}
+      {/*  Session filter  */}
       {sessions.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap">
           <FaFilter className="text-gray-400 text-sm" />
@@ -242,7 +242,7 @@ export default function Result() {
         </div>
       )}
 
-      {/* ── Empty state ── */}
+      {/*  Empty state  */}
       {results.length === 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 shadow-sm">
           <FaInbox className="text-5xl mx-auto mb-3" />
@@ -255,7 +255,7 @@ export default function Result() {
         </div>
       )}
 
-      {/* ── Results grouped by semester ── */}
+      {/*  Results grouped by semester  */}
       {groupKeys.map((group) => {
         const groupResults = grouped[group];
         const groupUnits = groupResults.reduce(
@@ -382,7 +382,7 @@ export default function Result() {
   );
 }
 
-/* ── Helper: GPA summary card ── */
+/*  Helper: GPA summary card  */
 function GpaCard({ label, value, color, isGpa = true }) {
   const colors = {
     blue: "bg-blue-50   text-blue-700   border-blue-200",
@@ -408,7 +408,7 @@ function GpaCard({ label, value, color, isGpa = true }) {
   );
 }
 
-/* ── Helper: filter button ── */
+/*  Helper: filter button  */
 function FilterBtn({ label, active, onClick }) {
   return (
     <button

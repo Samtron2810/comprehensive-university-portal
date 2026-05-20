@@ -100,7 +100,7 @@ export default function AboutPage() {
                 Over 150 Years of Academic Heritage
               </h2>
               <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                Founded in 1869, Comprehensive University began as a small
+                Founded in 2000, Comprehensive University began as a small
                 college committed to providing quality education to the local
                 community. Over the decades, it has grown into one of the most
                 respected institutions in the region, with a reputation for
@@ -116,7 +116,7 @@ export default function AboutPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { value: "1869", label: "Year Founded" },
+                { value: "2000", label: "Year Founded" },
                 { value: "30K+", label: "Students Enrolled" },
                 { value: "80+", label: "Academic Programmes" },
                 { value: "20+", label: "Faculties & Schools" },

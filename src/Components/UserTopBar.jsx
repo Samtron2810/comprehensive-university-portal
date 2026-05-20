@@ -16,7 +16,7 @@ export default function PortalTopBar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // ── Get User Data from LocalStorage ───────────────────────────────────────
+  //  Get User Data from LocalStorage
   const firstName = localStorage.getItem("firstName") || "";
   const lastName = localStorage.getItem("lastName") || "";
   const level = localStorage.getItem("level");
@@ -35,7 +35,7 @@ export default function PortalTopBar() {
     notifications: 0, // Logic for notifications can be added here later
   };
 
-  // ── Close dropdown when clicking outside ──────────────────────────────────
+  //  Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -46,7 +46,7 @@ export default function PortalTopBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ── Logout — calls API then clears localStorage ───────────────────────────
+  //  Logout — calls API then clears localStorage
   const handleLogout = async () => {
     try {
       setLoggingOut(true);

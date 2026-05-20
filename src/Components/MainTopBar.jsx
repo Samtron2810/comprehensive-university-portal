@@ -1,6 +1,13 @@
 import { useState } from "react";
-import { FaSchool, FaUser, FaBars, FaTimes } from "react-icons/fa";
+import {
+  FaSchool,
+  FaUser,
+  FaBars,
+  FaTimes,
+  FaCalculator,
+} from "react-icons/fa";
 import { Link } from "react-router-dom";
+import logo from "../assets/Images/university-logo.png";
 
 function MainTopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -10,8 +17,9 @@ function MainTopBar() {
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
         {/*  school Logo  */}
         <Link to="/" className="flex items-center gap-2.5 select-none">
-          <div className="flex items-center justify-center w-10 h-10 bg-[#1a3a6b] rounded text-white">
-            <FaSchool className="text-base" />
+          <div className="flex items-center justify-center w-10 h-10 bg-[#1a3a6b25] rounded text-white">
+            {/* import school logo here */}
+            <img src={logo} alt="University Logo" className="w-full h-3/4" />
           </div>
           <div className="leading-tight">
             <p className="text-[11px] font-black tracking-[0.15em] text-[#1a3a6b] uppercase">

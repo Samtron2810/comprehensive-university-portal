@@ -20,7 +20,7 @@ import {
 } from "react-icons/fa";
 import api from "../api/axiosInstance";
 
-// ─── Nav Configuration by Role ────────────────────────────────────────────────
+//  Nav Configuration by Role
 
 const NAV_CONFIG = {
   STUDENT: [
@@ -93,7 +93,7 @@ const NAV_CONFIG = {
   ],
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
+//  Component
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -104,7 +104,7 @@ export default function Sidebar() {
   const userRole = localStorage.getItem("role") || "STUDENT";
   const navItems = NAV_CONFIG[userRole] || NAV_CONFIG.STUDENT;
 
-  // ── Logout — calls API then clears localStorage ───────────────────────────
+  //  Logout — calls API then clears localStorage
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
@@ -123,7 +123,7 @@ export default function Sidebar() {
         expanded ? "w-56" : "w-16"
       }`}
     >
-      {/* ── Toggle Button ── */}
+      {/*  Toggle Button  */}
       <div
         className={`flex items-center py-5 px-3 border-b border-blue-800 ${
           expanded ? "justify-end" : "justify-center"
@@ -142,7 +142,7 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* ── Nav Links ── */}
+      {/*  Nav Links  */}
       <nav className="flex-1 py-4 flex flex-col gap-1 px-2 overflow-y-auto">
         {navItems.map(({ icon: Icon, label, to, disabled }) => (
           <NavLink
@@ -182,7 +182,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* ── Logout ── */}
+      {/*  Logout  */}
       <div className="px-2 py-1 mb-5 border-t border-b border-blue-800">
         <button
           onClick={handleLogout}

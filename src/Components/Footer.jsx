@@ -4,6 +4,7 @@ import {
   FaInstagram,
   FaLinkedinIn,
 } from "react-icons/fa";
+import logo from "../assets/Images/university-logo.png";
 
 const SOCIALS = [
   { icon: FaFacebookF, href: "#", label: "Facebook" },
@@ -21,9 +22,7 @@ export default function Footer() {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 bg-white rounded flex items-center justify-center">
-              <span className="text-blue-950 text-xs font-black tracking-tight">
-                CU
-              </span>
+              <img src={logo} alt="University Logo" />
             </div>
             <div className="leading-tight">
               <p className="text-xs font-black uppercase tracking-widest text-white">
@@ -55,7 +54,7 @@ export default function Footer() {
           </p>
           <p className="text-sm text-gray-300">
             <span className="font-semibold text-white">Address: </span>
-            Comprehensive University, Since 1869
+            Comprehensive University, Since 2000
           </p>
         </div>
 

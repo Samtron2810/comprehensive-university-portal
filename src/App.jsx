@@ -36,7 +36,7 @@ import AdminApprovals from "./Pages/Auth/AdminRoutes/Approvals";
 import AdminSessions from "./Pages/Auth/AdminRoutes/Sessions";
 import AdminSemesters from "./Pages/Auth/AdminRoutes/Semesters";
 
-// ─── Protected Route Helper ──────────────────────────────────────────────────
+//  Protected Route Helper
 
 const ProtectedRoute = ({ children, allowedRole }) => {
   const role = localStorage.getItem("role");
@@ -57,7 +57,7 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   return children;
 };
 
-// ─── Layout ───────────────────────────────────────────────────────────────────
+//  Layout
 
 const Layout = () => {
   const location = useLocation();
@@ -78,18 +78,18 @@ const Layout = () => {
       {/* {isPortalPage && <UserTopBar />} */}
 
       <Routes>
-        {/* ── Public Routes ── */}
+        {/*  Public Routes  */}
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<About />} />
         <Route path="/news" element={<News />} />
         <Route path="/admission" element={<Admission />} />
         <Route path="/support" element={<Support />} />
 
-        {/* ── Auth Routes ── */}
+        {/*  Auth Routes  */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* ── User Portal Routes ── */}
+        {/*  User Portal Routes  */}
         <Route path="/user-portal" element={<UserPortal />}>
           {/* For students */}
           <Route
@@ -223,7 +223,7 @@ const Layout = () => {
   );
 };
 
-// ─── App ──────────────────────────────────────────────────────────────────────
+//  App
 
 const App = () => {
   return (

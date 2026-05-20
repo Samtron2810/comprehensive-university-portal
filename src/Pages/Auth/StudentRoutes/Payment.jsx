@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa";
 import api from "../../../api/axiosInstance";
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
+//  Status Badge
 
 function StatusBadge({ status }) {
   const styles = {
@@ -43,7 +43,7 @@ function StatusBadge({ status }) {
   );
 }
 
-// ─── Receipt Generator ────────────────────────────────────────────────────────
+//  Receipt Generator
 
 const downloadReceipt = (payment) => {
   const firstName = localStorage.getItem("firstName") || "";
@@ -137,7 +137,7 @@ const downloadReceipt = (payment) => {
 
         <div class="footer">
           <p>This is an electronically generated receipt and is valid without a signature.</p>
-          <p style="margin-top: 6px;">Comprehensive University &mdash; Academic Excellence Since 1869</p>
+          <p style="margin-top: 6px;">Comprehensive University &mdash; Academic Excellence Since 2000</p>
         </div>
       </body>
     </html>
@@ -152,7 +152,7 @@ const downloadReceipt = (payment) => {
   }, 500);
 };
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+//  Page
 
 export default function PaymentPage() {
   const [payments, setPayments] = useState([]);
@@ -167,7 +167,7 @@ export default function PaymentPage() {
     localStorage.getItem("registrationId") || null,
   );
 
-  // ── Fetch Payments + Fallback registrationId ──────────────────────────────
+  //  Fetch Payments + Fallback registrationId
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -210,7 +210,7 @@ export default function PaymentPage() {
     fetchData();
   }, []);
 
-  // ── Computed Summary ──────────────────────────────────────────────────────
+  //  Computed Summary
   const totalPaid = payments
     .filter((p) => p.status === "SUCCESS")
     .reduce((sum, p) => sum + (p.amount || 0), 0);
@@ -230,7 +230,7 @@ export default function PaymentPage() {
         })
       : "—";
 
-  // ── Initiate Payment ──────────────────────────────────────────────────────
+  //  Initiate Payment
   const handleInitiatePayment = async () => {
     if (!registrationIdRef.current) {
       setMessage({
@@ -263,7 +263,7 @@ export default function PaymentPage() {
     }
   };
 
-  // ── Verify Payment ────────────────────────────────────────────────────────
+  //  Verify Payment
   const handleVerify = async (reference) => {
     try {
       setVerifying(reference);
@@ -290,7 +290,7 @@ export default function PaymentPage() {
     }
   };
 
-  // ── Loading ───────────────────────────────────────────────────────────────
+  //  Loading
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-blue-900">
@@ -304,7 +304,7 @@ export default function PaymentPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* ── Page Header ── */}
+      {/*  Page Header  */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Payment Info</h1>
@@ -326,7 +326,7 @@ export default function PaymentPage() {
         </button>
       </div>
 
-      {/* ── Message Banner ── */}
+      {/*  Message Banner  */}
       {message.text && (
         <div
           className={`p-4 rounded-xl text-sm font-bold border-l-4 ${
@@ -339,7 +339,7 @@ export default function PaymentPage() {
         </div>
       )}
 
-      {/* ── Summary Cards ── */}
+      {/*  Summary Cards  */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: "Total Payments", value: payments.length, highlight: false },
@@ -379,7 +379,7 @@ export default function PaymentPage() {
         ))}
       </div>
 
-      {/* ── Payment History Table ── */}
+      {/*  Payment History Table  */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
           <p className="text-sm font-black text-gray-800 uppercase tracking-wide">
